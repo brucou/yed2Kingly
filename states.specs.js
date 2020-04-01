@@ -1,4 +1,7 @@
-const {assert} = require('chai');
+const assert = require('assert');
+// const chai = require('chai');
+// chai.config.showDiff = false;
+// const assert = chai.assert;
 const {computeTransitionsAndStatesFromXmlString} = require ('./index');
 
 const yedString = `
@@ -477,24 +480,57 @@ dam</y:NodeLabel>
 
 const {transitions, stateYed2KinglyMap, stateHierarchy} = computeTransitionsAndStatesFromXmlString (yedString);
 
-assert.deepEqual(stateYed2KinglyMap, {
-  "n0": "init",
-  "n1::n0": `Showing\nmini UI`,
-  "n1::n1": "init",
-  "n1::n2": "H*",
-  "n1::n3": "big UI collapsed",
-  "n1::n3::n0": "If",
-  "n1::n3::n1": "init",
-  "n1::n3::n2": "then else",
-  "n1::n4": "dummy",
-  "n1": "Group 1",
-  "n2": "updating",
-  "n3::n0": "ran kan \nkan",
-  "n3::n1": "init",
-  "n3::n2": "pa dam\ndam",
-  "n3::n3": "H",
-  "n3": "Group 3",
-}, `Internal labels given to nodes as per XML file are correctly mapped to user-given names of nodes/control states`);
+
+
+describe('Conversion yed to kingly', function() {
+  describe('stateYed2KinglyMap', function() {
+    it('Internal labels given to nodes as per XML file are correctly mapped to user-given names of nodes/control states', function() {
+      assert.deepEqual(stateYed2KinglyMap, {
+        "n0": "init",
+        "n1::n0": `Showing\nmini UI`,
+        "n1::n1": "init",
+        "n1::n2": "H*",
+        "n1::n3": "big UI collapsed",
+        "n1::n3::n0": "If",
+        "n1::n3::n1": "init",
+        "n1::n3::n2": "then else",
+        "n1::n4": "dummy",
+        "n1": "Group 1",
+        "n2": "updating",
+        "n3::n0": "ran kan \nkan",
+        "n3::n1": "init",
+        "n3::n2": "pa dam\ndam",
+        "n3::n3": "H",
+        "n3": "Group 3",
+      });
+    });
+  });
+});
+
+describe('Conversion yed to kingly', function() {
+  describe('stateYed2KinglyMap', function() {
+    it(`The state hierarchy of the yed graph is correctly converted to a Kingly states configuration property`, function() {
+      assert.deepEqual(stateHierarchy, {
+        "n0": "init",
+        "n1::n0": `Showing\nmini UI`,
+        "n1::n1": "init",
+        "n1::n2": "H*",
+        "n1::n3": "big UI collapsed",
+        "n1::n3::n0": "If",
+        "n1::n3::n1": "init",
+        "n1::n3::n2": "then else",
+        "n1::n4": "dummy",
+        "n1": "Group 1",
+        "n2": "updating",
+        "n3::n0": "ran kan \nkan",
+        "n3::n1": "init",
+        "n3::n2": "pa dam\ndam",
+        "n3::n3": "H",
+        "n3": "Group 3",
+      });
+    });
+  });
+});
 
 // console.log(roseTree )
 // console.log(getChildren(graphObj)[1])
