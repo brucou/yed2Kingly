@@ -1,4 +1,4 @@
-const assert = require('assert-diff');
+const {assert} = require('chai');
 const {computeTransitionsAndStatesFromXmlString} = require ('./index');
 
 const yedString = `
@@ -479,7 +479,6 @@ const {transitions, stateYed2KinglyMap, stateHierarchy} = computeTransitionsAndS
 
 assert.deepEqual(stateYed2KinglyMap, {
   "n0": "init",
-  "n1": "Group 1",
   "n1::n0": `Showing\nmini UI`,
   "n1::n1": "init",
   "n1::n2": "H*",
@@ -488,20 +487,21 @@ assert.deepEqual(stateYed2KinglyMap, {
   "n1::n3::n1": "init",
   "n1::n3::n2": "then else",
   "n1::n4": "dummy",
+  "n1": "Group 1",
   "n2": "updating",
-  "n3": "Group 3",
   "n3::n0": "ran kan \nkan",
   "n3::n1": "init",
   "n3::n2": "pa dam\ndam",
   "n3::n3": "H",
+  "n3": "Group 3",
 }, `Internal labels given to nodes as per XML file are correctly mapped to user-given names of nodes/control states`);
-no
+
 // console.log(roseTree )
 // console.log(getChildren(graphObj)[1])
 // console.log(getChildren(graphObj).map(getLabel))
 // console.log(getLabel(getChildren(getChildren(graphObj)[1])[3]))
 // console.log(getChildren(graphObj)[1].data[2]['y:ProxyAutoBoundsNode']['y:Realizers']['y:GroupNode']['y:NodeLabel']['#text'])
-console.log(stateHierarchy)
+// console.log(stateHierarchy)
 // console.log(stateYed2KinglyMap)
 // console.log(edgesML[1].data[1]['y:PolyLineEdge']['y:EdgeLabel']['#text'])
 

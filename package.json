@@ -2,7 +2,8 @@
   "name": "yed2kingly",
   "version": "0.0.1",
   "devDependencies": {
-    "assert-diff": "^3.0.0"
+    "assert-diff": "^3.0.0",
+    "chai": "^4.2.0"
   },
   "dependencies": {
     "fast-xml-parser": "^3.16.0",

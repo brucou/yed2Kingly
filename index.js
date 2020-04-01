@@ -36,6 +36,7 @@ function computeTransitionsAndStatesFromXmlString(yedString){
   const constructStateHierarchy = (label, children) => {
     const [yedLabel, stateLabel] = label;
     const _label = label.join(STATE_LABEL_SEP);
+
     return stateLabel === YED_ENTRY_STATE
       ? {}
       :children && children.length === 0
@@ -43,8 +44,12 @@ function computeTransitionsAndStatesFromXmlString(yedString){
         : { [_label]: mergeAll(children) }
   };
   const constructStateYed2KinglyMap = (label, children) => {
-    console.log(`concat`, concat(children, [{ [label[0]]: label[1] }]))
-    return mergeAll(concat(children, [{ [label[0]]: label[1] }]))
+    const [yedLabel, stateLabel] = label;
+    const newMap = yedLabel === void 0
+    ? {}
+    : { [label[0]]: label[1] }
+
+    return mergeAll(concat(children, [newMap]))
   };
   const stateHierarchyLens = {
     getLabel,
