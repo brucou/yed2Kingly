@@ -1,8 +1,41 @@
+const { INIT_EVENT, INIT_STATE } = require('kingly');
 const assert = require('assert');
+const { mapOverObj, mapOverTree } = require('fp-rosetree');
 // const chai = require('chai');
 // chai.config.showDiff = false;
 // const assert = chai.assert;
-const {computeTransitionsAndStatesFromXmlString} = require ('./index');
+const { computeTransitionsAndStatesFromXmlString } = require('./index');
+
+function isFunction(obj) {
+  return typeof obj === 'function'
+}
+
+function isPOJO(obj) {
+  const proto = Object.prototype;
+  const gpo = Object.getPrototypeOf;
+
+  if (obj === null || typeof obj !== "object") {
+    return false;
+  }
+  return gpo(obj) === proto;
+}
+
+function formatResult(result) {
+  if (!isPOJO(result)) {
+    return result
+  }
+  else {
+    return mapOverObj({
+        key: x => x,
+        leafValue: prop => isFunction(prop)
+          ? (prop.name || prop.displayName || 'anonymous')
+          : Array.isArray(prop)
+            ? prop.map(formatResult)
+            : prop
+      },
+      result)
+  }
+}
 
 const yedString = `
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -114,7 +147,7 @@ mini UI</y:NodeLabel>
                   <y:BorderInsets bottom="0" bottomF="0.0" left="41" leftF="41.0" right="9" rightF="8.5" top="0" topF="0.0"/>
                 </y:GroupNode>
                 <y:GenericGroupNode configuration="PanelNode">
-                  <y:Geometry height="50.0" width="50.0" x="231.75949590773808" y="0.0"/>
+                  <y:Geometry height="50.0" width="50.0" x="230.0" y="434.87646484375"/>
                   <y:Fill color="#68B0E3" transparent="false"/>
                   <y:BorderStyle hasColor="false" type="line" width="1.0"/>
                   <y:NodeLabel alignment="right" autoSizePolicy="node_width" borderDistance="0.0" fontFamily="Dialog" fontSize="16" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="23.6015625" horizontalTextPosition="center" iconTextGap="4" modelName="internal" modelPosition="t" textColor="#FFFFFF" verticalTextPosition="bottom" visible="true" width="117.84375" x="-33.921875" xml:space="preserve" y="0.0">big UI collapsed</y:NodeLabel>
@@ -274,7 +307,7 @@ dam</y:NodeLabel>
           <y:Path sx="0.0" sy="15.0" tx="-35.5" ty="-220.62646484375"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="33.40234375" horizontalTextPosition="center" iconTextGap="4" modelName="free" modelPosition="anywhere" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="52.0234375" x="-54.0234375" xml:space="preserve" y="10.125">^K
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="33.40234375" horizontalTextPosition="center" iconTextGap="4" modelName="free" modelPosition="anywhere" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="52.0234375" x="-54.0234375" xml:space="preserve" y="10.125">
 / activate<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" placement="anywhere" side="right" sideReference="relative_to_edge_flow"/></y:EdgeLabel>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
@@ -283,7 +316,7 @@ dam</y:NodeLabel>
     <edge id="e1" source="n1" target="n2">
       <data key="d10">
         <y:PolyLineEdge>
-          <y:Path sx="-81.75" sy="220.62646484375" tx="15.0" ty="-15.03125"/>
+          <y:Path sx="-81.75" sy="220.62646484375" tx="15.0" ty="-14.96875"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
           <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="33.40234375" horizontalTextPosition="center" iconTextGap="4" modelName="free" modelPosition="anywhere" preferredPlacement="right" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="107.39453125" x="-109.39453125" xml:space="preserve" y="10.125">trace sent
@@ -386,6 +419,15 @@ dam</y:NodeLabel>
           <y:Path sx="-15.0" sy="-14.96875" tx="0.0" ty="15.0"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
+          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" hasText="false" height="4.0" horizontalTextPosition="center" iconTextGap="4" modelName="custom" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="4.0" x="28.0" y="-89.94482421875">
+            <y:LabelModel>
+              <y:SmartEdgeLabelModel autoRotationEnabled="false" defaultAngle="0.0" defaultDistance="10.0"/>
+            </y:LabelModel>
+            <y:ModelParameter>
+              <y:SmartEdgeLabelModelParameter angle="0.0" distance="30.0" distanceToCenter="true" position="right" ratio="0.5" segment="0"/>
+            </y:ModelParameter>
+            <y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" frozen="true" placement="anywhere" side="anywhere" sideReference="relative_to_edge_flow"/>
+          </y:EdgeLabel>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
@@ -478,13 +520,12 @@ dam</y:NodeLabel>
 
 `
 
-const {transitions, stateYed2KinglyMap, stateHierarchy} = computeTransitionsAndStatesFromXmlString (yedString);
+const { getKinglyTransitions, stateYed2KinglyMap, stateHierarchy } = computeTransitionsAndStatesFromXmlString(yedString);
 
 
-
-describe('Conversion yed to kingly', function() {
-  describe('stateYed2KinglyMap', function() {
-    it('Internal labels given to nodes as per XML file are correctly mapped to user-given names of nodes/control states', function() {
+describe('Conversion yed to kingly', function () {
+  describe('stateYed2KinglyMap', function () {
+    it('Internal labels given to nodes as per XML file are correctly mapped to user-given names of nodes/control states', function () {
       assert.deepEqual(stateYed2KinglyMap, {
         "n0": "init",
         "n1::n0": `Showing\nmini UI`,
@@ -505,40 +546,184 @@ describe('Conversion yed to kingly', function() {
       });
     });
   });
-});
 
-describe('Conversion yed to kingly', function() {
-  describe('stateYed2KinglyMap', function() {
-    it(`The state hierarchy of the yed graph is correctly converted to a Kingly states configuration property`, function() {
+  describe('stateHierarchy', function () {
+    it(`The state hierarchy of the yed graph is correctly converted to a Kingly states configuration property`, function () {
       assert.deepEqual(stateHierarchy, {
-        "n0": "init",
-        "n1::n0": `Showing\nmini UI`,
-        "n1::n1": "init",
-        "n1::n2": "H*",
-        "n1::n3": "big UI collapsed",
-        "n1::n3::n0": "If",
-        "n1::n3::n1": "init",
-        "n1::n3::n2": "then else",
-        "n1::n4": "dummy",
-        "n1": "Group 1",
-        "n2": "updating",
-        "n3::n0": "ran kan \nkan",
-        "n3::n1": "init",
-        "n3::n2": "pa dam\ndam",
-        "n3::n3": "H",
-        "n3": "Group 3",
+        // "n0ღinit",
+        "n2ღupdating": "",
+        "n1ღGroup 1": {
+          "n1::n0ღShowing\nmini UI": "",
+          // "n1::n1ღinit",
+          // TODO: history
+          "n1::n2ღH*": "",
+          "n1::n3ღbig UI collapsed": {
+            "n1::n3::n0ღIf": "",
+            // "n1::n3::n1ღinit",
+            "n1::n3::n2ღthen else": "",
+          },
+          "n1::n4ღdummy": "",
+        },
+        "n3ღGroup 3": {
+          "n3::n0ღran kan \nkan": "",
+          // "n3::n1ღinit",
+          "n3::n2ღpa dam\ndam": "",
+          // TODO: history
+          "n3::n3ღH": "",
+        },
       });
     });
   });
+
+  describe('getKinglyTransitions', function () {
+    // TODO: use mapOverObject to replace functions with their names
+    it(`The transitions for the yed graph are correctly reflected in a Kingly transitions configuration property`, function () {
+      const actionFactories = {
+        activate: "-activate",
+        "update trace store": "-update trace store",
+        "deactivate": "-deactivate",
+        "expand clicked": "-expand clicked",
+        "restore session": "-restore session",
+      };
+      const guards = {
+        isOk: "-isOk",
+        "not(isOk)": "-not(isOk)",
+        "shown": "-shown",
+        "only guard": "-only guard",
+        "another only guard": "-another only guard"
+
+      };
+      const formattedTransitions = getKinglyTransitions({ actionFactories, guards })
+        .map(formatResult);
+
+      assert.deepEqual(formattedTransitions, [
+          // NOTE: top-level initial transition (simulates initialControlState)
+          // so no event is allowed by the user on such pseudo-states
+          {
+            "action": "-activate",
+            "event": INIT_EVENT,
+            "from": INIT_STATE,
+            // "from": "n0ღinit",
+            "to": "n1ღGroup 1",
+          },
+          {
+            "action": "-update trace store",
+            "event": "trace sent",
+            "from": "n1ღGroup 1",
+            "to": "n2ღupdating",
+          },
+          {
+            "action": "ACTION_IDENTITY",
+            "event": INIT_EVENT,
+            "from": "n3ღGroup 3",
+            // "from": "n3::n1ღinit",
+            "to": "n3::n0ღran kan \nkan",
+          },
+          {
+            "event": "stay",
+            "from": "n3::n0ღran kan \nkan",
+            "guards": [
+              {
+                "action": "ACTION_IDENTITY",
+                "predicate": "-isOk",
+                "to": "n3::n0ღran kan \nkan",
+              },
+              {
+                "action": "-deactivate",
+                "predicate": "-not(isOk)",
+                "to": "n3::n2ღpa dam\ndam",
+              }
+            ]
+          },
+          {
+            "event": "",
+            "from": "n3::n2ღpa dam\ndam",
+            "guards": [
+              {
+                "action": "ACTION_IDENTITY",
+                "predicate": "T",
+                // TODO: put a shallow history state here
+                "to": "n3::n3ღH~~~~TODO~~~~",
+              },
+              {
+                "action": "ACTION_IDENTITY",
+                "predicate": "T",
+                "to": "n1::n3ღbig UI collapsed"
+              }
+            ]
+          },
+          {
+            "action": "ACTION_IDENTITY",
+            "event": "",
+            "from": "n3::n0ღran kan \nkan",
+            "to": "n1::n3::n2ღthen else"
+          },
+          {
+            "action": "ACTION_IDENTITY",
+            "event": "",
+            "from": "n2ღupdating",
+            // TODO: put a deep history state here
+            "to": "n1::n2ღH*~~~~TODO~~~~",
+          },
+          {
+            "event": "",
+            "from": "n1::n0ღShowing\nmini UI",
+            "guards": [
+              {
+                "action": "-expand clicked",
+                "predicate": "-shown",
+                "to": "n1::n3::n0ღIf",
+              },
+              {
+                "action": "ACTION_IDENTITY",
+                "predicate": "T",
+                "to": "n1::n4ღdummy",
+              }
+            ]
+          },
+          {
+            "action": "-restore session",
+            "event": INIT_EVENT,
+            "from": "n1ღGroup 1",
+            // "from": "n1::n1ღinit",
+            "to": "n1::n0ღShowing\nmini UI",
+          },
+          {
+            "action": "ACTION_IDENTITY",
+            "event": "minimize clicked",
+            "from": "n1::n3::n0ღIf",
+            "to": "n1::n0ღShowing\nmini UI"
+          },
+          {
+            "event": INIT_EVENT,
+            "from": "n1::n3ღbig UI collapsed",
+            "guards": [
+              {
+                "action": "ACTION_IDENTITY",
+                "predicate": "-only guard",
+                "to": "n1::n3::n0ღIf"
+              },
+              {
+                "action": "ACTION_IDENTITY",
+                "predicate": "-another only guard",
+                "to": "n1::n3::n2ღthen else"
+              }
+            ]
+          }
+        ]
+      );
+    });
+  });
+
 });
+
 
 // console.log(roseTree )
 // console.log(getChildren(graphObj)[1])
 // console.log(getChildren(graphObj).map(getLabel))
 // console.log(getLabel(getChildren(getChildren(graphObj)[1])[3]))
 // console.log(getChildren(graphObj)[1].data[2]['y:ProxyAutoBoundsNode']['y:Realizers']['y:GroupNode']['y:NodeLabel']['#text'])
-// console.log(stateHierarchy)
-// console.log(stateYed2KinglyMap)
+// console.log(stateHierarchy) console.log(stateYed2KinglyMap)
 // console.log(edgesML[1].data[1]['y:PolyLineEdge']['y:EdgeLabel']['#text'])
 
 // TODO: make better test files to test both the edges and the transitions

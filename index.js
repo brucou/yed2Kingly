@@ -1,20 +1,37 @@
+const { ACTION_IDENTITY, INIT_STATE, INIT_EVENT } = require('kingly')
 const parser = require('fast-xml-parser');
 const { mapOverTree } = require('fp-rosetree');
 const { lensPath, view, mergeAll, concat, forEachObjIndexed } = require('ramda');
 const STATE_LABEL_SEP = 'ღ';
 const YED_LABEL_DECODE_SEP = 'ღ';
-const DEFAULT_ACTION_FACTORY = 'ACTION_IDENTITY';
+const DEFAULT_ACTION_FACTORY_STR = 'ACTION_IDENTITY';
+const DEFAULT_ACTION_FACTORY = ACTION_IDENTITY;
 const YED_ENTRY_STATE = 'init';
 
-function computeTransitionsAndStatesFromXmlString(yedString){
-  function isCompoundState(graphObj) {
-    return graphObj['@_yfiles.foldertype'] === 'group'
-  }
+function T() { return true}
 
-  function isGraphRoot(graphObj) {
-    return 'key' in graphObj
-  }
+function isCompoundState(graphObj) {
+  return graphObj['@_yfiles.foldertype'] === 'group'
+}
 
+function isGraphRoot(graphObj) {
+  return 'key' in graphObj
+}
+
+function yedStatetoKinglyState(stateYed2KinglyMap, yedState) {
+  return [yedState, stateYed2KinglyMap[yedState]].join(STATE_LABEL_SEP);
+}
+
+function isInitialTransition(yedFrom, userFrom) {
+  return userFrom === YED_ENTRY_STATE
+}
+
+function isTopLevelInitTransition(yedFrom, userFrom) {
+  // yEd internal naming is nX::Ny::... so a top-level node will be just nX
+  return isInitialTransition(yedFrom, userFrom) && yedFrom.split('::').length === 1
+}
+
+function computeTransitionsAndStatesFromXmlString(yedString) {
   const atomicStateLens = lensPath(['y:ShapeNode', 'y:NodeLabel', '#text']);
   const compoundStateLens = lensPath(['y:ProxyAutoBoundsNode', 'y:Realizers', 'y:GroupNode', 'y:NodeLabel', '#text']);
 
@@ -39,15 +56,15 @@ function computeTransitionsAndStatesFromXmlString(yedString){
 
     return stateLabel === YED_ENTRY_STATE
       ? {}
-      :children && children.length === 0
+      : children && children.length === 0
         ? { [_label]: "" }
         : { [_label]: mergeAll(children) }
   };
   const constructStateYed2KinglyMap = (label, children) => {
     const [yedLabel, stateLabel] = label;
     const newMap = yedLabel === void 0
-    ? {}
-    : { [label[0]]: label[1] }
+      ? {}
+      : { [label[0]]: label[1] }
 
     return mergeAll(concat(children, [newMap]))
   };
@@ -85,8 +102,8 @@ function computeTransitionsAndStatesFromXmlString(yedString){
 // in an array
 // : `from` and `event` are string so need for a ES6 Map here, ES3 objects suffice
   const edges = edgesML.reduce((biHashMap, edgeML) => {
-    const from = view(edgeOriginStateLens, edgeML);
-    const to = view(edgeTargetStateLens, edgeML);
+    const from = view(edgeOriginStateLens, edgeML).trim();
+    const to = view(edgeTargetStateLens, edgeML).trim();
     // Label as in yEd i.e. `x [y] / z` string, with x, y, z all optionals
     // Also: z is a string representing a function, but not a function
     const edgeMlLabel = getEdgeMlLabel(edgeML);
@@ -102,17 +119,23 @@ function computeTransitionsAndStatesFromXmlString(yedString){
     // x        : expressionList.length === 1
     // / z      : expressionList.length === 1
     // nil      : expressionList.length === 1
-    const actionFactory = expressionList.length === 3
-      ? expressionList[2] && expressionList[2].split('/')[1] || DEFAULT_ACTION_FACTORY
-      : expressionList[0].split('/')[1] || DEFAULT_ACTION_FACTORY;
+    const actionFactory = (
+      expressionList.length === 3
+        ? expressionList[2] && expressionList[2].split('/')[1] || DEFAULT_ACTION_FACTORY_STR
+        : expressionList[0].split('/')[1] || DEFAULT_ACTION_FACTORY_STR
+    ).trim();
 
     // Reminder: eventless means !event is truthy so can be null, undefined or "" (or num<>0 -)
-    const event = expressionList.length === 3
-      ? expressionList[0] && expressionList[0].trim() || ""
-      : expressionList[0].split('/')[0] || ""
-    const guard = expressionList.length === 3
-      ? expressionList[1] && expressionList[1].trim() || ""
-      : "";
+    const event = (
+      expressionList.length === 3
+        ? expressionList[0] && expressionList[0].trim() || ""
+        : expressionList[0].split('/')[0] || ""
+    ).trim();
+    const guard = (
+      expressionList.length === 3
+        ? expressionList[1] && expressionList[1].trim() || ""
+        : ""
+    ).trim();
     const fromEventKey = [from, event].join(YED_LABEL_DECODE_SEP);
 
     biHashMap[fromEventKey] = biHashMap[fromEventKey] || [];
@@ -125,29 +148,81 @@ function computeTransitionsAndStatesFromXmlString(yedString){
 // With `edges`, the right format is computed according to whether there
 // is only one non-trivial guard in the transition or not
 // TODO: also check that event, predicate etc. are strings nothing weird
-  let transitions = [];
-  forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
-    let [from, event] = fromEventKey.split(YED_LABEL_DECODE_SEP);
-    event = event.trim();
-    from = from.trim();
-    if (arrGuardsTargetActions.length === 1) {
-      const { predicate, to, actionFactory } = arrGuardsTargetActions[0];
-      if (!predicate) {
-        transitions.push({ from, event, to, actionFactory })
+  function getKinglyTransitions({ actionFactories, guards }) {
+    let transitions = [];
+    forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
+      const [yedFrom, _event] = fromEventKey.split(YED_LABEL_DECODE_SEP);
+      const _from = yedStatetoKinglyState(stateYed2KinglyMap, yedFrom);
+      const userFrom = stateYed2KinglyMap[yedFrom];
+      let from = _from;
+      let event = _event;
+
+      // Case: init transition
+      if (isInitialTransition(yedFrom, userFrom)) {
+        //   Case: top-level init transition
+        if (isTopLevelInitTransition(yedFrom, userFrom)) {
+          from = INIT_STATE;
+          event = INIT_EVENT;
+        }
+        //   Case: non-top-level, i.e. compound state's init transition
+        // -> there is a parent to the origin node, that's the compound node we want
+        else {
+          const fromParent = from.split('::').slice(0,-1).join('::')
+          from = [fromParent, stateYed2KinglyMap[fromParent]].join(STATE_LABEL_SEP)
+          event = INIT_EVENT;
+        }
       }
+
+      // TODO: replace history states
+      // TODO: some error control here to add
+      // - actionStr cannt be found in actionFactories
+      // - same for guards
+      // TODOL deal with initial control state or maybe impose it to be passed? not possible
+      // use initial transition
+      // {from: INIT_STATE, event: INIT_EVENT, to: initialControlState, action: ACTION_IDENTITY}])
+      // call it I if exists else pass it from outside? should be able to programtically find it?
+      // TODO: init transitions start with the compound state not a specific named state
+
+      // Case: simplifiable syntax, e.g. no predicate, and only one transition in array
+      if (arrGuardsTargetActions.length === 1 && !arrGuardsTargetActions[0].predicate) {
+        const { to: yedTo, actionFactory: actionFactoryStr } = arrGuardsTargetActions[0];
+
+        transitions.push({
+          from,
+          event,
+          to: yedStatetoKinglyState(stateYed2KinglyMap, yedTo),
+          action: actionFactoryStr === DEFAULT_ACTION_FACTORY_STR
+            ? DEFAULT_ACTION_FACTORY
+            : actionFactories[actionFactoryStr]
+        })
+      }
+      // Case: non-simplifiable syntax
       else {
-        transitions.push({ from, event, guards: arrGuardsTargetActions })
+        transitions.push({
+          from,
+          event,
+          guards: arrGuardsTargetActions.map(arrGuardsTargetAction => {
+            const { predicate: predicateStr, to: yedTo, actionFactory: actionFactoryStr } = arrGuardsTargetAction;
+            return {
+              predicate: guards[predicateStr] || T,
+              to: yedStatetoKinglyState(stateYed2KinglyMap, yedTo),
+              action: actionFactoryStr === DEFAULT_ACTION_FACTORY_STR
+                ? DEFAULT_ACTION_FACTORY
+                : actionFactories[actionFactoryStr]
+            }
+          })
+        })
       }
-    }
-    else {
-      transitions.push({ from, event, guards: arrGuardsTargetActions })
-    }
-  }, edges);
+    }, edges);
+
+    return transitions
+  }
 
   return {
-    stateHierarchy, stateYed2KinglyMap, transitions
+    stateHierarchy, stateYed2KinglyMap, getKinglyTransitions
   }
 }
+
 // Lenses for traversing the syntax tree
 
 module.exports = {
@@ -160,6 +235,8 @@ module.exports = {
 // Only ever one [x]
 // Only ever one /
 // Never ever the SEP (heart symbol)
+// yEd action cannot be named ACTION_IDENTITY and no such entry in actionFactories prop
+// No event allowed on initial states (top-level or else)
 
 // TODO left:
 // - read parameters
