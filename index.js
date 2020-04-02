@@ -1,4 +1,4 @@
-const { ACTION_IDENTITY, INIT_STATE, INIT_EVENT } = require('kingly')
+const { ACTION_IDENTITY, INIT_STATE, INIT_EVENT, historyState, SHALLOW, DEEP } = require('kingly')
 const parser = require('fast-xml-parser');
 const { mapOverTree } = require('fp-rosetree');
 const { lensPath, view, mergeAll, concat, forEachObjIndexed } = require('ramda');
@@ -7,6 +7,8 @@ const YED_LABEL_DECODE_SEP = 'ღ';
 const DEFAULT_ACTION_FACTORY_STR = 'ACTION_IDENTITY';
 const DEFAULT_ACTION_FACTORY = ACTION_IDENTITY;
 const YED_ENTRY_STATE = 'init';
+const YED_SHALLOW_HISTORY_STATE = "H";
+const YED_DEEP_HISTORY_STATE = "H*";
 
 function T() { return true}
 
@@ -16,6 +18,10 @@ function isCompoundState(graphObj) {
 
 function isGraphRoot(graphObj) {
   return 'key' in graphObj
+}
+
+function getYedParentNode(yedFrom) {
+  return yedFrom.split('::').slice(0, -1).join('::')
 }
 
 function yedStatetoKinglyState(stateYed2KinglyMap, yedState) {
@@ -29,6 +35,29 @@ function isInitialTransition(yedFrom, userFrom) {
 function isTopLevelInitTransition(yedFrom, userFrom) {
   // yEd internal naming is nX::Ny::... so a top-level node will be just nX
   return isInitialTransition(yedFrom, userFrom) && yedFrom.split('::').length === 1
+}
+
+function isHistoryDestinationState(stateYed2KinglyMap, yedTo) {
+  const x = stateYed2KinglyMap[yedTo].trim();
+  return x === YED_SHALLOW_HISTORY_STATE || x === YED_DEEP_HISTORY_STATE
+}
+
+function isDeepHistoryDestinationState(stateYed2KinglyMap, yedTo) {
+  const x = stateYed2KinglyMap[yedTo].trim();
+  return isHistoryDestinationState(stateYed2KinglyMap, yedTo) && x === YED_DEEP_HISTORY_STATE
+}
+
+function computeKinglyDestinationState(stateYed2KinglyMap, yedTo) {
+  // History states are states which user named H (shallow) or H* (deep)
+  if (isHistoryDestinationState(stateYed2KinglyMap, yedTo)) {
+    return isDeepHistoryDestinationState(stateYed2KinglyMap, yedTo)
+      ? historyState(DEEP, yedStatetoKinglyState(stateYed2KinglyMap, getYedParentNode(yedTo)))
+      : historyState(SHALLOW, yedStatetoKinglyState(stateYed2KinglyMap, getYedParentNode(yedTo)))
+
+  }
+  else {
+    return yedStatetoKinglyState(stateYed2KinglyMap, yedTo);
+  }
 }
 
 function computeTransitionsAndStatesFromXmlString(yedString) {
@@ -151,6 +180,8 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   function getKinglyTransitions({ actionFactories, guards }) {
     let transitions = [];
     forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
+      // Example:
+      // yedFrom: "n0::n0" ; userFrom: "entered by user" ; _from: "n0::n0[symbol]entered by user"
       const [yedFrom, _event] = fromEventKey.split(YED_LABEL_DECODE_SEP);
       const _from = yedStatetoKinglyState(stateYed2KinglyMap, yedFrom);
       const userFrom = stateYed2KinglyMap[yedFrom];
@@ -167,7 +198,7 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
         //   Case: non-top-level, i.e. compound state's init transition
         // -> there is a parent to the origin node, that's the compound node we want
         else {
-          const fromParent = from.split('::').slice(0,-1).join('::')
+          const fromParent = getYedParentNode(yedFrom)
           from = [fromParent, stateYed2KinglyMap[fromParent]].join(STATE_LABEL_SEP)
           event = INIT_EVENT;
         }
@@ -190,7 +221,7 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
         transitions.push({
           from,
           event,
-          to: yedStatetoKinglyState(stateYed2KinglyMap, yedTo),
+          to: computeKinglyDestinationState(stateYed2KinglyMap, yedTo),
           action: actionFactoryStr === DEFAULT_ACTION_FACTORY_STR
             ? DEFAULT_ACTION_FACTORY
             : actionFactories[actionFactoryStr]
@@ -205,7 +236,7 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
             const { predicate: predicateStr, to: yedTo, actionFactory: actionFactoryStr } = arrGuardsTargetAction;
             return {
               predicate: guards[predicateStr] || T,
-              to: yedStatetoKinglyState(stateYed2KinglyMap, yedTo),
+              to: computeKinglyDestinationState(stateYed2KinglyMap, yedTo),
               action: actionFactoryStr === DEFAULT_ACTION_FACTORY_STR
                 ? DEFAULT_ACTION_FACTORY
                 : actionFactories[actionFactoryStr]

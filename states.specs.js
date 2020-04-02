@@ -603,7 +603,6 @@ describe('Conversion yed to kingly', function () {
             "action": "-activate",
             "event": INIT_EVENT,
             "from": INIT_STATE,
-            // "from": "n0ღinit",
             "to": "n1ღGroup 1",
           },
           {
@@ -616,7 +615,6 @@ describe('Conversion yed to kingly', function () {
             "action": "ACTION_IDENTITY",
             "event": INIT_EVENT,
             "from": "n3ღGroup 3",
-            // "from": "n3::n1ღinit",
             "to": "n3::n0ღran kan \nkan",
           },
           {
@@ -642,8 +640,9 @@ describe('Conversion yed to kingly', function () {
               {
                 "action": "ACTION_IDENTITY",
                 "predicate": "T",
-                // TODO: put a shallow history state here
-                "to": "n3::n3ღH~~~~TODO~~~~",
+                "to": {
+                  "shallow": "n3ღGroup 3"
+                }
               },
               {
                 "action": "ACTION_IDENTITY",
@@ -662,8 +661,9 @@ describe('Conversion yed to kingly', function () {
             "action": "ACTION_IDENTITY",
             "event": "",
             "from": "n2ღupdating",
-            // TODO: put a deep history state here
-            "to": "n1::n2ღH*~~~~TODO~~~~",
+            "to": {
+              "deep": "n1ღGroup 1"
+            }
           },
           {
             "event": "",
@@ -685,7 +685,6 @@ describe('Conversion yed to kingly', function () {
             "action": "-restore session",
             "event": INIT_EVENT,
             "from": "n1ღGroup 1",
-            // "from": "n1::n1ღinit",
             "to": "n1::n0ღShowing\nmini UI",
           },
           {
