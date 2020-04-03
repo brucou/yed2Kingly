@@ -37,8 +37,7 @@ function formatResult(result) {
   }
 }
 
-const yedString = `
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+const yedString = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:java="http://www.yworks.com/xml/yfiles-common/1.0/java" xmlns:sys="http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0" xmlns:x="http://www.yworks.com/xml/yfiles-common/markup/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:y="http://www.yworks.com/xml/graphml" xmlns:yed="http://www.yworks.com/xml/yed/3" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd">
   <!--Created by yEd 3.19-->
   <key attr.name="Description" attr.type="string" for="graph" id="d0"/>
@@ -714,18 +713,12 @@ describe('Conversion yed to kingly', function () {
     });
   });
 
+  describe('integration', function () {
+    it(`The machine obtained from the conversion of a graphml state machine to a Kingly machine runs as expected`, function () {
+      assert.equal(true, false)
+      // TODO: get a real example (can be complex, that's the point,
+      // but lot of problems with syntax - I must implement the functions, so names should not have space, could take one from Kingly test? I need a machine with H* !! take the chess example rewritten? yeah that could be useful for tutorial
+      // however reusing stupid machine from Kingly let test more conditions so do both
+    })
+  })
 });
-
-
-// console.log(roseTree )
-// console.log(getChildren(graphObj)[1])
-// console.log(getChildren(graphObj).map(getLabel))
-// console.log(getLabel(getChildren(getChildren(graphObj)[1])[3]))
-// console.log(getChildren(graphObj)[1].data[2]['y:ProxyAutoBoundsNode']['y:Realizers']['y:GroupNode']['y:NodeLabel']['#text'])
-// console.log(stateHierarchy) console.log(stateYed2KinglyMap)
-// console.log(edgesML[1].data[1]['y:PolyLineEdge']['y:EdgeLabel']['#text'])
-
-// TODO: make better test files to test both the edges and the transitions
-// toutes les combinaisons de x y z mais aussi predicate unique non nul et nul
-// console.log(edges)
-// console.log(transitions)

@@ -12,6 +12,30 @@ const YED_DEEP_HISTORY_STATE = "H*";
 
 function T() { return true}
 
+function tryCatch(fn, errCb) {
+  return function tryCatch(...args) {
+    try {return fn.apply(fn, args);}
+    catch (e) {
+      return errCb(e, args);
+    }
+  };
+}
+
+class Yed2KinglyConversionError extends Error {
+  constructor(m) {
+    super(m);
+    this.errors = m;
+    this.message = m.map(({ when, location, info, message }) => {
+      // formatted message
+      const fm = `At ${location}: ${when} => ${message}`;
+      console.info(fm, info);
+      // TODO: see if I keep or not
+      console.err(m);
+      return fm
+    }).concat([`See extra info in console`]).join('\n');
+  }
+}
+
 function isCompoundState(graphObj) {
   return graphObj['@_yfiles.foldertype'] === 'group'
 }
@@ -47,8 +71,12 @@ function isDeepHistoryDestinationState(stateYed2KinglyMap, yedTo) {
   return isHistoryDestinationState(stateYed2KinglyMap, yedTo) && x === YED_DEEP_HISTORY_STATE
 }
 
+// iff no predicate, and only one transition in array
+function isSimplifiableSyntax(arrGuardsTargetActions) {
+  return arrGuardsTargetActions.length === 1 && !arrGuardsTargetActions[0].predicate
+}
+
 function computeKinglyDestinationState(stateYed2KinglyMap, yedTo) {
-  // History states are states which user named H (shallow) or H* (deep)
   if (isHistoryDestinationState(stateYed2KinglyMap, yedTo)) {
     return isDeepHistoryDestinationState(stateYed2KinglyMap, yedTo)
       ? historyState(DEEP, yedStatetoKinglyState(stateYed2KinglyMap, getYedParentNode(yedTo)))
@@ -60,10 +88,69 @@ function computeKinglyDestinationState(stateYed2KinglyMap, yedTo) {
   }
 }
 
+function mapActionFactoryStrToActionFactoryFn(actionFactories, actionFactoryStr) {
+  return actionFactoryStr === DEFAULT_ACTION_FACTORY_STR
+    ? DEFAULT_ACTION_FACTORY
+    : actionFactories[actionFactoryStr]
+}
+
+function mapGuardStrToGuardFn(guards, predicateStr) {
+  return guards[predicateStr] || T
+}
+
+function parseGraphMlString(yedString) {
+  return tryCatch(
+    (yedString) => {
+      // true as third param validates the xml string prior to parsing, possibly throws
+      // cf. https://github.com/NaturalIntelligence/fast-xml-parser#xml-to-json
+      // Validator returns the following object in case of error;
+      // {
+      //   err: {
+      //     code: code,
+      //       msg: message,
+      //       line: lineNumber,
+      //   },
+      // };
+      const jsonObj = parser.parse(yedString, { ignoreAttributes: false }, true);
+      if (!jsonObj.graphml) throw `Not a graphml file? Could not find a <graphml> tag!`
+      return jsonObj
+    },
+    (e, [yedString]) => {
+      throw new Yed2KinglyConversionError([
+        {
+          when: `parsing the graphml string`,
+          location: `computeTransitionsAndStatesFromXmlString > parser.parse`,
+          info: { yedString },
+          possibleCauses: [
+            `File is not an XML file`,
+            `File is not a graphML file`,
+            `File is not a yed-generated graphML file`,
+            // `File was read incorrectly from disk`,
+            // `You found a bug in fast-xml=parser (unlikely)`,
+            // `You found a bug in yed2Kindly converter (maybe)`,
+          ],
+          message: e.message,
+          original: e
+        }
+      ])
+    }
+  )(yedString)
+}
+
+// TODO: checking
+// - check directly the generated states and transitions with Kingly but now!
+// - but maybe also check basic stuff about states (not empty), node labels (only one [] etc)
+// Only ever one [x]
+// Only ever one /
+// Never ever the SEP (heart symbol)
+// yEd action cannot be named ACTION_IDENTITY and no such entry in actionFactories prop
+// No event allowed on initial states (top-level or else)
+// - any yed of the multiple graph types seem to all be graph, with only visuals changing
+//   so this algorithm should be fine even with swimlanes and fancy stuff
 function computeTransitionsAndStatesFromXmlString(yedString) {
+  let errors = [];
   const atomicStateLens = lensPath(['y:ShapeNode', 'y:NodeLabel', '#text']);
   const compoundStateLens = lensPath(['y:ProxyAutoBoundsNode', 'y:Realizers', 'y:GroupNode', 'y:NodeLabel', '#text']);
-
   const getLabel = graphObj => {
     const graphData = graphObj.data;
     const lens = isCompoundState(graphObj) ? compoundStateLens : atomicStateLens;
@@ -107,11 +194,21 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
     getChildren,
     constructTree: constructStateYed2KinglyMap,
   };
-  const { graphml: graphObj } = parser.parse(yedString, { ignoreAttributes: false });
+
+  // Parse the xml string and traverse the xml tree to compute the state hierarchy.
+  // Kingly's state names will be made unique with concatenating yed node's name and user-given's
+  // node name. The name's unicity comes from yed naming including hierarchy information,
+  // e.g. n0::n0::n3 is a node two levels deep.
+  // As transitions in the .graphml file only use the yed node's name, we also keep a mapping of
+  // the correspondence between how yed labels node vs. how the user does
+  // Then we convert the transitions in the graphml, taking care of specific cases:
+  // - initial transitions
+  //   - yed: node with label YED_ENTRY_STATE
+  // - history pseudo-states
+  //   - yed: node with label YED_SHALLOW_HISTORY_STATE or YED_DEEP_HISTORY_STATE
+  const { graphml: graphObj } = parseGraphMlString(yedString);
   const stateHierarchy = mapOverTree(stateHierarchyLens, x => x, graphObj)[STATE_LABEL_SEP];
   const stateYed2KinglyMap = mapOverTree(stateYed2KinglyLens, x => x, graphObj);
-
-// Compute the transitions (Kingly format) now
   const edgeOriginStateLens = lensPath(['@_source']);
   const edgeTargetStateLens = lensPath(['@_target']);
   const edgeMlLabelLens = lensPath(['y:PolyLineEdge', 'y:EdgeLabel', '#text'])
@@ -120,22 +217,21 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
     const d10Record = data.find(d => d['@_key'] === 'd10');
     return view(edgeMlLabelLens, d10Record) || "";
   };
-  const edgesML = graphObj.graph.edge;
+  const yedEdges = graphObj.graph.edge;
 
-// `edges` is an intermediate computation to derive the transitions in Kingly format
+
 // Kingly only admits one transition record per (from, event) couple
 // Additionally, when there is no guard to check, a simplified transition format can be used
 // i.e. {from, event, to, actionFactory}
-// else standard format: {from, event, guards : [{predicate, to, actionFactory}]}
+// otherwise standard format: {from, event, guards : [{predicate, to, actionFactory}]} is used
 // To prepare for deriving transitions, we use a hashmap which conflates all matching transitions
-// in an array
-// : `from` and `event` are string so need for a ES6 Map here, ES3 objects suffice
-  const edges = edgesML.reduce((biHashMap, edgeML) => {
-    const from = view(edgeOriginStateLens, edgeML).trim();
-    const to = view(edgeTargetStateLens, edgeML).trim();
+// in an array.
+  const aggregateEdgesPerFromEventKey = (hashMap, yedEdge) => {
+    const from = view(edgeOriginStateLens, yedEdge).trim();
+    const to = view(edgeTargetStateLens, yedEdge).trim();
     // Label as in yEd i.e. `x [y] / z` string, with x, y, z all optionals
     // Also: z is a string representing a function, but not a function
-    const edgeMlLabel = getEdgeMlLabel(edgeML);
+    const edgeMlLabel = getEdgeMlLabel(yedEdge);
     const yedLabelRegExp = /\[(.*)\]/;
     const expressionList = edgeMlLabel.split(yedLabelRegExp);
 
@@ -154,7 +250,7 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
         : expressionList[0].split('/')[1] || DEFAULT_ACTION_FACTORY_STR
     ).trim();
 
-    // Reminder: eventless means !event is truthy so can be null, undefined or "" (or num<>0 -)
+    // Reminder: eventless means !event is truthy so "" is ok
     const event = (
       expressionList.length === 3
         ? expressionList[0] && expressionList[0].trim() || ""
@@ -167,16 +263,38 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
     ).trim();
     const fromEventKey = [from, event].join(YED_LABEL_DECODE_SEP);
 
-    biHashMap[fromEventKey] = biHashMap[fromEventKey] || [];
-    biHashMap[fromEventKey] = biHashMap[fromEventKey].concat([
+    hashMap[fromEventKey] = hashMap[fromEventKey] || [];
+    hashMap[fromEventKey] = hashMap[fromEventKey].concat([
       { predicate: guard.trim(), to: to.trim(), actionFactory: actionFactory.trim() }
     ]);
-    return biHashMap
-  }, {});
+    return hashMap
+  }
+  const edges = yedEdges.reduce(
+    tryCatch(
+      aggregateEdgesPerFromEventKey,
+      (e, [hashMap, yedEdge]) => {
+        errors.push({
+          when: `building (from, event) hashmap`,
+          location: `computeTransitionsAndStatesFromXmlString > aggregateEdgesPerFromEventKey`,
+          info: {hashMap: JSON.parse(JSON.stringify(hashMap)), yedEdge},
+          message,
+          possibleCauses: [
+            `File is not a valid graphML file`,
+            `File is not a valid yed-generated graphML file`,
+            `You found a bug in yed2Kindly converter`,
+            // `You found a bug in fast-xml=parser (unlikely)`,
+          ],
+        })
+      }),
+    {}
+  );
+if (errors.length > 0) throw new Yed2KinglyConversionError (errors);
 
-// With `edges`, the right format is computed according to whether there
-// is only one non-trivial guard in the transition or not
-// TODO: also check that event, predicate etc. are strings nothing weird
+
+  // Transitions are computed by means of a function in which the mapping between actions and guards
+  // strings and the respective JavaScript functions is injected
+  // Previously computed edges is traversed and converted into Kingly transitions
+  // TODO: also check that event, predicate etc. are strings nothing weird
   function getKinglyTransitions({ actionFactories, guards }) {
     let transitions = [];
     forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
@@ -204,30 +322,20 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
         }
       }
 
-      // TODO: replace history states
       // TODO: some error control here to add
-      // - actionStr cannt be found in actionFactories
+      // - actionStr cannot be found in actionFactories
       // - same for guards
-      // TODOL deal with initial control state or maybe impose it to be passed? not possible
-      // use initial transition
-      // {from: INIT_STATE, event: INIT_EVENT, to: initialControlState, action: ACTION_IDENTITY}])
-      // call it I if exists else pass it from outside? should be able to programtically find it?
-      // TODO: init transitions start with the compound state not a specific named state
-
-      // Case: simplifiable syntax, e.g. no predicate, and only one transition in array
-      if (arrGuardsTargetActions.length === 1 && !arrGuardsTargetActions[0].predicate) {
+      // - no spacing in actions...
+      if (isSimplifiableSyntax(arrGuardsTargetActions)) {
         const { to: yedTo, actionFactory: actionFactoryStr } = arrGuardsTargetActions[0];
 
         transitions.push({
           from,
           event,
           to: computeKinglyDestinationState(stateYed2KinglyMap, yedTo),
-          action: actionFactoryStr === DEFAULT_ACTION_FACTORY_STR
-            ? DEFAULT_ACTION_FACTORY
-            : actionFactories[actionFactoryStr]
+          action: mapActionFactoryStrToActionFactoryFn(actionFactories, actionFactoryStr)
         })
       }
-      // Case: non-simplifiable syntax
       else {
         transitions.push({
           from,
@@ -235,11 +343,9 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
           guards: arrGuardsTargetActions.map(arrGuardsTargetAction => {
             const { predicate: predicateStr, to: yedTo, actionFactory: actionFactoryStr } = arrGuardsTargetAction;
             return {
-              predicate: guards[predicateStr] || T,
+              predicate: mapGuardStrToGuardFn(guards, predicateStr),
               to: computeKinglyDestinationState(stateYed2KinglyMap, yedTo),
-              action: actionFactoryStr === DEFAULT_ACTION_FACTORY_STR
-                ? DEFAULT_ACTION_FACTORY
-                : actionFactories[actionFactoryStr]
+              action: mapActionFactoryStrToActionFactoryFn(actionFactories, actionFactoryStr)
             }
           })
         })
@@ -250,7 +356,7 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   }
 
   return {
-    stateHierarchy, stateYed2KinglyMap, getKinglyTransitions
+    stateHierarchy, stateYed2KinglyMap, getKinglyTransitions, errors
   }
 }
 
@@ -259,15 +365,6 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
 module.exports = {
   computeTransitionsAndStatesFromXmlString
 }
-
-// const {errors, warnings} = validateEdge
-
-// RULES:
-// Only ever one [x]
-// Only ever one /
-// Never ever the SEP (heart symbol)
-// yEd action cannot be named ACTION_IDENTITY and no such entry in actionFactories prop
-// No event allowed on initial states (top-level or else)
 
 // TODO left:
 // - read parameters
