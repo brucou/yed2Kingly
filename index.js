@@ -4,6 +4,63 @@ const { lensPath, view, mergeAll, concat, forEachObjIndexed } = require('ramda')
 const { handleAggregateEdgesPerFromEventKeyErrors, T, tryCatchFactory, Yed2KinglyConversionError, handleParseGraphMlStringErrors, isCompoundState, isInitialTransition, isSimplifiableSyntax, isTopLevelInitTransition, getYedParentNode, computeKinglyDestinationState, mapActionFactoryStrToActionFactoryFn, mapGuardStrToGuardFn, yedState2KinglyState, parseGraphMlString } = require('./helpers');
 const { DEFAULT_ACTION_FACTORY_STR, STATE_LABEL_SEP, YED_ENTRY_STATE, YED_LABEL_DECODE_SEP } = require('./properties');
 
+// Lenses to access fields deep in xml json
+const edgeOriginStateLens = lensPath(['@_source']);
+const edgeTargetStateLens = lensPath(['@_target']);
+const edgeMlLabelLens = lensPath(['y:PolyLineEdge', 'y:EdgeLabel', '#text'])
+const atomicStateLens = lensPath(['y:ShapeNode', 'y:NodeLabel', '#text']);
+const compoundStateLens = lensPath(['y:ProxyAutoBoundsNode', 'y:Realizers', 'y:GroupNode', 'y:NodeLabel', '#text']);
+const getYedEdgeLabel = edgeML => {
+  const data = Array.isArray(edgeML.data) ? edgeML.data : [edgeML.data];
+  const d10Record = data.find(d => d['@_key'] === 'd10');
+  return view(edgeMlLabelLens, d10Record) || "";
+};
+
+// Lenses for traversing the syntax tree
+const getLabel = graphObj => {
+  const graphData = graphObj.data;
+  const lens = isCompoundState(graphObj) ? compoundStateLens : atomicStateLens;
+  const dataKeys = Array.isArray(graphData)
+    ? graphData.reduce((acc, dataItem) => {
+      return Object.assign(acc, { [dataItem['@_key']]: view(lens, dataItem) })
+    }, {})
+    : graphData['@_key'] === 'd6'
+      ? { d6: view(lens, graphData) }
+      : {};
+  const stateLabel = dataKeys.d6 || "";
+
+  return [graphObj['@_id'], stateLabel]
+};
+const getChildren = graphObj => graphObj.graph ? graphObj.graph.node : [];
+const constructStateHierarchy = (label, children) => {
+  const [yedLabel, stateLabel] = label;
+  const _label = label.join(STATE_LABEL_SEP);
+
+  return stateLabel === YED_ENTRY_STATE
+    ? {}
+    : children && children.length === 0
+      ? { [_label]: "" }
+      : { [_label]: mergeAll(children) }
+};
+const constructStateYed2KinglyMap = (label, children) => {
+  const [yedLabel, stateLabel] = label;
+  const newMap = yedLabel === void 0
+    ? {}
+    : { [label[0]]: label[1] }
+
+  return mergeAll(concat(children, [newMap]))
+};
+const stateHierarchyLens = {
+  getLabel,
+  getChildren,
+  constructTree: constructStateHierarchy,
+};
+const stateYed2KinglyLens = {
+  getLabel,
+  getChildren,
+  constructTree: constructStateYed2KinglyMap,
+};
+
 function aggregateEdgesPerFromEventKey(hashMap, yedEdge) {
   const from = view(edgeOriginStateLens, yedEdge).trim();
   const to = view(edgeTargetStateLens, yedEdge).trim();
@@ -112,60 +169,6 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
   }
 }
 
-const edgeOriginStateLens = lensPath(['@_source']);
-const edgeTargetStateLens = lensPath(['@_target']);
-const edgeMlLabelLens = lensPath(['y:PolyLineEdge', 'y:EdgeLabel', '#text'])
-const getYedEdgeLabel = edgeML => {
-  const data = Array.isArray(edgeML.data) ? edgeML.data : [edgeML.data];
-  const d10Record = data.find(d => d['@_key'] === 'd10');
-  return view(edgeMlLabelLens, d10Record) || "";
-};
-const atomicStateLens = lensPath(['y:ShapeNode', 'y:NodeLabel', '#text']);
-const compoundStateLens = lensPath(['y:ProxyAutoBoundsNode', 'y:Realizers', 'y:GroupNode', 'y:NodeLabel', '#text']);
-const getLabel = graphObj => {
-  const graphData = graphObj.data;
-  const lens = isCompoundState(graphObj) ? compoundStateLens : atomicStateLens;
-  const dataKeys = Array.isArray(graphData)
-    ? graphData.reduce((acc, dataItem) => {
-      return Object.assign(acc, { [dataItem['@_key']]: view(lens, dataItem) })
-    }, {})
-    : graphData['@_key'] === 'd6'
-      ? { d6: view(lens, graphData) }
-      : {};
-  const stateLabel = dataKeys.d6 || "";
-
-  return [graphObj['@_id'], stateLabel]
-};
-const getChildren = graphObj => graphObj.graph ? graphObj.graph.node : [];
-const constructStateHierarchy = (label, children) => {
-  const [yedLabel, stateLabel] = label;
-  const _label = label.join(STATE_LABEL_SEP);
-
-  return stateLabel === YED_ENTRY_STATE
-    ? {}
-    : children && children.length === 0
-      ? { [_label]: "" }
-      : { [_label]: mergeAll(children) }
-};
-const constructStateYed2KinglyMap = (label, children) => {
-  const [yedLabel, stateLabel] = label;
-  const newMap = yedLabel === void 0
-    ? {}
-    : { [label[0]]: label[1] }
-
-  return mergeAll(concat(children, [newMap]))
-};
-const stateHierarchyLens = {
-  getLabel,
-  getChildren,
-  constructTree: constructStateHierarchy,
-};
-const stateYed2KinglyLens = {
-  getLabel,
-  getChildren,
-  constructTree: constructStateYed2KinglyMap,
-};
-
 // TODO: checking
 // - check directly the generated states and transitions with Kingly but now!
 // - but maybe also check basic stuff about states (not empty), node labels (only one [] etc)
@@ -221,8 +224,6 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
     stateHierarchy, stateYed2KinglyMap, getKinglyTransitions, errors: _errors
   }
 }
-
-// Lenses for traversing the syntax tree
 
 module.exports = {
   computeTransitionsAndStatesFromXmlString
