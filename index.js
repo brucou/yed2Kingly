@@ -61,7 +61,7 @@ const stateYed2KinglyLens = {
   constructTree: constructStateYed2KinglyMap,
 };
 
-function aggregateEdgesPerFromEventKey(hashMap, yedEdge) {
+function aggregateEdgesPerFromEventKey({ edges: hashMap, events }, yedEdge) {
   const from = view(edgeOriginStateLens, yedEdge).trim();
   const to = view(edgeTargetStateLens, yedEdge).trim();
   // Label as in yEd i.e. `x [y] / z` string, with x, y, z all optionals
@@ -102,7 +102,7 @@ function aggregateEdgesPerFromEventKey(hashMap, yedEdge) {
   hashMap[fromEventKey] = hashMap[fromEventKey].concat([
     { predicate: guard.trim(), to: to.trim(), actionFactory: actionFactory.trim() }
   ]);
-  return hashMap
+  return { edges: hashMap, events: event ? events.add(event) : events }
 }
 
 function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
@@ -179,6 +179,7 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
 // No event allowed on initial states (top-level or else)
 // - any yed of the multiple graph types seem to all be graph, with only visuals changing
 //   so this algorithm should be fine even with swimlanes and fancy stuff
+// TODO: il faut calculer aussi the events array!!
 function computeTransitionsAndStatesFromXmlString(yedString) {
   // Building the error accumulation capability
   // Could thread this with applicative functors but keeping it simple and plain
@@ -210,9 +211,9 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   // To prepare for deriving transitions, we use a hashmap which conflates all matching transitions
   // in an array:
   // edges ~~ {[from<|>event]: [...]}
-  const edges = yedEdges.reduce(
+  const { edges, events } = yedEdges.reduce(
     tryCatch(aggregateEdgesPerFromEventKey, handleAggregateEdgesPerFromEventKeyErrors),
-    {}
+    { edges: {}, events: new Set() }
   );
   if (_errors.length > 0) throw new Yed2KinglyConversionError(_errors);
 
@@ -221,7 +222,7 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   const getKinglyTransitions = computeKinglyTransitionsFactory(stateYed2KinglyMap, edges);
 
   return {
-    stateHierarchy, stateYed2KinglyMap, getKinglyTransitions, errors: _errors
+    stateHierarchy, stateYed2KinglyMap, events: Array.from(events), getKinglyTransitions, errors: _errors
   }
 }
 
