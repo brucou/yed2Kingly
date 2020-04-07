@@ -222,7 +222,11 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   const getKinglyTransitions = computeKinglyTransitionsFactory(stateYed2KinglyMap, edges);
 
   return {
-    stateHierarchy, stateYed2KinglyMap, events: Array.from(events), getKinglyTransitions, errors: _errors
+    states: stateHierarchy,
+    stateYed2KinglyMap,
+    events: Array.from(events),
+    getKinglyTransitions,
+    errors: _errors
   }
 }
 

@@ -1,42 +1,9 @@
 const { INIT_EVENT, INIT_STATE } = require('kingly');
 const assert = require('assert');
-const { mapOverObj, mapOverTree } = require('fp-rosetree');
-// const chai = require('chai');
-// chai.config.showDiff = false;
-// const assert = chai.assert;
+const { formatResult} = require('./helpers');
 const { computeTransitionsAndStatesFromXmlString } = require('./index');
 
-function isFunction(obj) {
-  return typeof obj === 'function'
-}
-
-function isPOJO(obj) {
-  const proto = Object.prototype;
-  const gpo = Object.getPrototypeOf;
-
-  if (obj === null || typeof obj !== "object") {
-    return false;
-  }
-  return gpo(obj) === proto;
-}
-
-function formatResult(result) {
-  if (!isPOJO(result)) {
-    return result
-  }
-  else {
-    return mapOverObj({
-        key: x => x,
-        leafValue: prop => isFunction(prop)
-          ? (prop.name || prop.displayName || 'anonymous')
-          : Array.isArray(prop)
-            ? prop.map(formatResult)
-            : prop
-      },
-      result)
-  }
-}
-
+// cf. tests/graphs/test-yed-conversion.graphml
 const yedString = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <graphml xmlns="http://graphml.graphdrawing.org/xmlns" xmlns:java="http://www.yworks.com/xml/yfiles-common/1.0/java" xmlns:sys="http://www.yworks.com/xml/yfiles-common/markup/primitives/2.0" xmlns:x="http://www.yworks.com/xml/yfiles-common/markup/2.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:y="http://www.yworks.com/xml/graphml" xmlns:yed="http://www.yworks.com/xml/yed/3" xsi:schemaLocation="http://graphml.graphdrawing.org/xmlns http://www.yworks.com/xml/schema/graphml/1.1/ygraphml.xsd">
   <!--Created by yEd 3.19-->
@@ -519,7 +486,7 @@ dam</y:NodeLabel>
 `
 
 describe('Conversion yed to kingly', function () {
-  const { getKinglyTransitions, stateYed2KinglyMap, stateHierarchy, events } = computeTransitionsAndStatesFromXmlString(yedString);
+  const { getKinglyTransitions, stateYed2KinglyMap, states, events } = computeTransitionsAndStatesFromXmlString(yedString);
 
   describe('stateYed2KinglyMap', function () {
     it('Internal labels given to nodes as per XML file are correctly mapped to user-given names of nodes/control states', function () {
@@ -544,9 +511,9 @@ describe('Conversion yed to kingly', function () {
     });
   });
 
-  describe('stateHierarchy', function () {
+  describe('states', function () {
     it(`The state hierarchy of the yed graph is correctly converted to a Kingly states configuration property`, function () {
-      assert.deepEqual(stateHierarchy, {
+      assert.deepEqual(states, {
         // "n0ღinit",
         "n2ღupdating": "",
         "n1ღGroup 1": {

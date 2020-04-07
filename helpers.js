@@ -1,6 +1,7 @@
 const parser = require('fast-xml-parser');
 const {YED_DEEP_HISTORY_STATE, YED_SHALLOW_HISTORY_STATE, YED_ENTRY_STATE, STATE_LABEL_SEP, DEFAULT_ACTION_FACTORY_STR,DEFAULT_ACTION_FACTORY} = require('./properties');
 const {historyState, SHALLOW, DEEP} = require("kingly");
+const { mapOverObj } = require('fp-rosetree');
 
 function T() { return true}
 
@@ -153,6 +154,38 @@ function parseGraphMlString(yedString) {
   return jsonObj
 }
 
+// Test helpers
+function isFunction(obj) {
+  return typeof obj === 'function'
+}
+
+function isPOJO(obj) {
+  const proto = Object.prototype;
+  const gpo = Object.getPrototypeOf;
+
+  if (obj === null || typeof obj !== "object") {
+    return false;
+  }
+  return gpo(obj) === proto;
+}
+
+function formatResult(result) {
+  if (!isPOJO(result)) {
+    return result
+  }
+  else {
+    return mapOverObj({
+        key: x => x,
+        leafValue: prop => isFunction(prop)
+          ? (prop.name || prop.displayName || 'anonymous')
+          : Array.isArray(prop)
+            ? prop.map(formatResult)
+            : prop
+      },
+      result)
+  }
+}
+
 
 module.exports = {
   T,
@@ -164,8 +197,6 @@ module.exports = {
   isGraphRoot,
   isInitialTransition,
   isTopLevelInitTransition,
-  isHistoryDestinationState,
-  isDeepHistoryDestinationState,
   isSimplifiableSyntax,
   getYedParentNode,
   yedState2KinglyState,
@@ -173,4 +204,5 @@ module.exports = {
   mapActionFactoryStrToActionFactoryFn,
   mapGuardStrToGuardFn,
   parseGraphMlString,
+  formatResult,
 }
