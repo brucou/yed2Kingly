@@ -245,3 +245,7 @@ module.exports = {
 // - write a file
 //   - probably PUG or liquid or ejs whatever template possible
 //   - remember export transitions is a function, states too
+// TODO: imrpvoe
+// - log state list, eevent list, guard list, action list, so it can be copied into code
+// instead of typed by hand
+// actually could be directly: const guards = {} preformatted commented in the output js file!!

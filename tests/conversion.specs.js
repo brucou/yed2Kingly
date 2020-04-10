@@ -1,7 +1,7 @@
 const { INIT_EVENT, INIT_STATE } = require('kingly');
 const assert = require('assert');
-const { formatResult} = require('./helpers');
-const { computeTransitionsAndStatesFromXmlString } = require('./index');
+const { formatResult} = require('../helpers');
+const { computeTransitionsAndStatesFromXmlString } = require('../index');
 
 // cf. tests/graphs/test-yed-conversion.graphml
 const yedString = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -519,7 +519,6 @@ describe('Conversion yed to kingly', function () {
         "n1ღGroup 1": {
           "n1::n0ღShowing\nmini UI": "",
           // "n1::n1ღinit",
-          // TODO: history
           "n1::n2ღH*": "",
           "n1::n3ღbig UI collapsed": {
             "n1::n3::n0ღIf": "",
@@ -532,7 +531,6 @@ describe('Conversion yed to kingly', function () {
           "n3::n0ღran kan \nkan": "",
           // "n3::n1ღinit",
           "n3::n2ღpa dam\ndam": "",
-          // TODO: history
           "n3::n3ღH": "",
         },
       });
@@ -551,7 +549,6 @@ describe('Conversion yed to kingly', function () {
   });
 
   describe('getKinglyTransitions', function () {
-    // TODO: use mapOverObject to replace functions with their names
     it(`The transitions for the yed graph are correctly reflected in a Kingly transitions configuration property`, function () {
       const actionFactories = {
         activate: "-activate",
@@ -689,13 +686,4 @@ describe('Conversion yed to kingly', function () {
     });
   });
 
-  describe('integration', function () {
-    it(`The machine obtained from the conversion of a graphml state machine to a Kingly machine runs as expected`, function () {
-      assert.equal(true, false)
-      // TODO: get a real example (can be complex, that's the point,
-      // but lot of problems with syntax - I must implement the functions, so names should not have space, could take
-      // one from Kingly test? I need a machine with H* !! take the chess example rewritten? yeah that could be useful
-      // for tutorial however reusing stupid machine from Kingly let test more conditions so do both
-    })
-  })
 });
