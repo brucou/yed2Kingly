@@ -16,9 +16,8 @@ describe('Conversion yed to kingly', function () {
   const settings = {};
   const event1 = { event1: void 0 };
   const event2 = { event2: void 0 };
-  const event3 = { event3: void 0 };
-  const eventSpace = [event1, event2, event3];
-  const unknownEvent = { eventX: void 0 };
+  const unknownEvent = { event3: void 0 };
+  const eventSpace = [event1, event2, unknownEvent];
 
   describe('top_level_conditional_init', function () {
     const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
