@@ -17,7 +17,6 @@ describe('Conversion yed to kingly', function () {
   const event1 = { event1: void 0 };
   const event2 = { event2: void 0 };
   const unknownEvent = { event3: void 0 };
-  const eventSpace = [event1, event2, unknownEvent];
 
   describe('top_level_conditional_init', function () {
     const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
@@ -65,6 +64,7 @@ describe('Conversion yed to kingly', function () {
   describe('no-hierarchy-events-eventless', function () {
     const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
       computeTransitionsAndStatesFromXmlString(no_hierarchy_events_eventless);
+    const eventSpace = [event1, event2, unknownEvent];
     const guards = {
       "shouldReturnToA": (s, e, stg) => s.shouldReturnToA,
     };
@@ -147,7 +147,6 @@ describe('Conversion yed to kingly', function () {
       const fsm2 = createStateMachine(fsmDef2, settings);
       return scenario.map(fsm2)
     });
-    console.log(`event1 event2 event1`, outputs2[3])
     const expected2 = [
       // [event1, event1, event1]
       [["A -> B"], null, null],
@@ -195,6 +194,187 @@ describe('Conversion yed to kingly', function () {
         "n2ღB": "",
         "n3ღC": "",
         "n4ღD": ""
+      }, `The hierarchy of states is correctly parsed`);
+      assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
+      assert.deepEqual(outputs2, expected2, `Branch machine initialized with string ok`);
+    });
+  });
+
+  describe('no-hierarchy-events-eventless', function () {
+    // tests with:
+    // - condition1 fulfilled
+    // - condition2 fulfilled
+    // - condition3 fulfilled
+    // - both cond1 and cond2 fulfilled
+    // - both cond2 and cond3 fulfilled
+    // - none fulfilled
+    // [condx, condy]
+    // use power of 2 (bit position)
+    // Achtung!!!! For the tests, the order of guards in the guards array matters!!!
+    // I made it the transitions in same order as the condition so easier to reason about
+    const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
+      computeTransitionsAndStatesFromXmlString(no_hierarchy_eventful_eventless_guards);
+    const eventSpace = [
+      { event: 1 },
+      { event: 2 },
+      { event: 4 },
+      { event: 3 },
+      { event: 6 },
+      { event: 0 },
+    ];
+    const guards = {
+      "shouldReturnToA": (s, e, stg) => s.shouldReturnToA,
+      condition1: (s, e, stg) => e & 1,
+      condition2: (s, e, stg) => e & 2,
+      condition3: (s, e, stg) => e & 4,
+    };
+    const actionFactories = {
+      logAtoTemp1: (s, e, stg) => traceTransition("A -> Temp1"),
+      logTemp1toA: (s, e, stg) => traceTransition("Temp1 -> A"),
+      logAtoTemp2: (s, e, stg) => traceTransition("A -> Temp2"),
+      logTemp2toA: (s, e, stg) => traceTransition("Temp2 -> A"),
+      logAtoDone: (s, e, stg) => traceTransition("A -> Done"),
+    };
+
+    // Two machines to test the guard and achieve all-transition coverage
+    const fsmDef1 = {
+      updateState,
+      initialExtendedState: { shouldReturnToA: false },
+      events,
+      states,
+      transitions: getKinglyTransitions({ actionFactories, guards })
+    };
+    const inputSpace = cartesian([0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]);
+    const cases = inputSpace.map(scenario => {
+      return [
+        eventSpace[scenario[0]],
+        eventSpace[scenario[1]],
+      ]
+    })
+    const outputs1 = cases.map(scenario => {
+      const fsm1 = createStateMachine(fsmDef1, settings);
+      return scenario.map(fsm1)
+    });
+    const expected1 = [
+      // [cond1, cond1]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      // [cond1, cond2]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      // [cond1, cond3]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Done", null]],
+      // [cond1, cond12]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      // [cond1, cond23]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      // [!cond]
+      [["A -> Temp1", "Temp1 -> A"], null],
+      // [cond2, x]
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Done", null]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], null],
+      // [cond3, x]
+      [["A -> Done", null], null],
+      [["A -> Done", null], null],
+      [["A -> Done", null], null],
+      [["A -> Done", null], null],
+      [["A -> Done", null], null],
+      [["A -> Done", null], null],
+      // [cond12, x]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Done", null]],
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp1", "Temp1 -> A"], null],
+      // [cond23, x]
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Done", null]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], null],
+      // [!cond, x]
+      [null, ["A -> Temp1", "Temp1 -> A"]],
+      [null, ["A -> Temp2", "Temp2 -> A"]],
+      [null, ["A -> Done", null]],
+      [null, ["A -> Temp1", "Temp1 -> A"]],
+      [null, ["A -> Temp2", "Temp2 -> A"]],
+      [null, null]
+    ];
+
+    const fsmDef2 = {
+      updateState,
+      initialExtendedState: { shouldReturnToA: true },
+      events,
+      states,
+      transitions: getKinglyTransitions({ actionFactories, guards })
+    };
+    const fsm2 = createStateMachine(fsmDef2, settings);
+    const outputs2 = cases.map(scenario => {
+      const fsm2 = createStateMachine(fsmDef2, settings);
+      return scenario.map(fsm2)
+    });
+    const expected2 = [
+      // [cond1, cond1]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      // [cond1, cond2]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      // [cond1, cond3]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Done", null]],
+      // [cond1, cond12]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      // [cond1, cond23]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      // [!cond]
+      [["A -> Temp1", "Temp1 -> A"], null],
+      // [cond2, x]
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Done", null]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], null],
+      // [cond3, x]
+      [["A -> Done", null], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Done", null], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Done", null], ["A -> Done", null]],
+      [["A -> Done", null], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Done", null], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Done", null], null],
+      // [cond12, x]
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Done", null]],
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp1", "Temp1 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp1", "Temp1 -> A"], null],
+      // [cond23, x]
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Done", null]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp1", "Temp1 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], ["A -> Temp2", "Temp2 -> A"]],
+      [["A -> Temp2", "Temp2 -> A"], null],
+      // [!cond, x]
+      [null, ["A -> Temp1", "Temp1 -> A"]],
+      [null, ["A -> Temp2", "Temp2 -> A"]],
+      [null, ["A -> Done", null]],
+      [null, ["A -> Temp1", "Temp1 -> A"]],
+      [null, ["A -> Temp2", "Temp2 -> A"]],
+      [null, null]
+    ];
+
+    it('runs the machine as per the graph', function () {
+      assert.deepEqual(errors, [], `graphml string is correctly parsed`);
+      assert.deepEqual(events, ["event"], `The list of events is correctly parsed`);
+      assert.deepEqual(states, {
+        "n1ღA": "",
+        "n2ღTemp1": "",
+        "n3ღTemp2": "",
+        "n4ღDone": ""
       }, `The hierarchy of states is correctly parsed`);
       assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
       assert.deepEqual(outputs2, expected2, `Branch machine initialized with string ok`);
