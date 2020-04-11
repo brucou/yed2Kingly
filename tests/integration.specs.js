@@ -1,25 +1,26 @@
 // This takes graph in .graphml strings format, converts it and
 // check that the obtained Kingly graph works as it should
 
-const { INIT_EVENT, INIT_STATE, NO_OUTPUT, createStateMachine } = require('kingly');
+const {INIT_EVENT, INIT_STATE, NO_OUTPUT, createStateMachine} = require('kingly');
 const assert = require('assert');
 const graphs = require('./graphs.fixtures');
-const { computeTransitionsAndStatesFromXmlString } = require('../index');
-const { formatResult, cartesian } = require('../helpers');
+const {computeTransitionsAndStatesFromXmlString} = require('../index');
+const {formatResult, cartesian} = require('../helpers');
 // Use a simple merge to update extended state, that's enough for tests
 // but then updates must be an object, not an array
 const updateState = (extendedState, updates) => Object.assign({}, extendedState, updates);
-const traceTransition = str => ({ outputs: str, updates: {}, });
+const traceTransition = str => ({outputs: str, updates: {},});
 
 describe('Conversion yed to kingly', function () {
-  const { top_level_conditional_init, deep_hierarchy_conditional_automatic_init_event_eventless, deep_hierarchy_history_H_star, hierarchy_conditional_init, hierarchy_history_H, hierarchy_history_H_star, no_hierarchy_eventful_eventless_guards, no_hierarchy_events_eventless, top_level_conditional_init_with_hierarchy, } = graphs;
+  const {top_level_conditional_init, deep_hierarchy_conditional_automatic_init_event_eventless, deep_hierarchy_history_H_star, hierarchy_conditional_init, hierarchy_history_H, hierarchy_history_H_star, no_hierarchy_eventful_eventless_guards, no_hierarchy_events_eventless, top_level_conditional_init_with_hierarchy,} = graphs;
   const settings = {};
-  const event1 = { event1: void 0 };
-  const event2 = { event2: void 0 };
-  const unknownEvent = { event3: void 0 };
+  const event1 = {event1: void 0};
+  const event2 = {event2: void 0};
+  const event3 = {event3: void 0};
+  const unknownEvent = {event3: void 0};
 
   describe('top_level_conditional_init', function () {
-    const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
+    const {getKinglyTransitions, stateYed2KinglyMap, states, events, errors} =
       computeTransitionsAndStatesFromXmlString(top_level_conditional_init);
     const guards = {
       // we test on extended state, so we test also the guard parameters
@@ -28,33 +29,33 @@ describe('Conversion yed to kingly', function () {
       "isNumber": (s, e, stg) => (typeof s.n === 'number'),
     };
     const actionFactories = {
-      logOther: (s, e, stg) => ({ outputs: `logOther run on ${s.n}`, updates: {} }),
-      logNumber: (s, e, stg) => ({ outputs: `logNumber run on ${s.n}`, updates: {} }),
+      logOther: (s, e, stg) => ({outputs: `logOther run on ${s.n}`, updates: {}}),
+      logNumber: (s, e, stg) => ({outputs: `logNumber run on ${s.n}`, updates: {}}),
     };
     const fsmDef1 = {
       updateState,
-      initialExtendedState: { n: 0 },
+      initialExtendedState: {n: 0},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards })
+      transitions: getKinglyTransitions({actionFactories, guards})
     };
     const fsm1 = createStateMachine(fsmDef1, settings);
     const fsmDef2 = {
       updateState,
-      initialExtendedState: { n: "" },
+      initialExtendedState: {n: ""},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards })
+      transitions: getKinglyTransitions({actionFactories, guards})
     };
     const fsm2 = createStateMachine(fsmDef2, settings);
 
     const outputs1 = [
-      { [events[0] + "X"]: void 0 },
-      { [events[0]]: void 0 },
-      { [events[0]]: void 0 }
+      {[events[0] + "X"]: void 0},
+      {[events[0]]: void 0},
+      {[events[0]]: void 0}
     ].map(fsm1);
     const expected1 = [NO_OUTPUT, ["logNumber run on 0"], NO_OUTPUT];
-    const outputs2 = [{ [events[0] + "X"]: void 0 }, { [events[0]]: void 0 }, { [events[0]]: void 0 }].map(fsm2);
+    const outputs2 = [{[events[0] + "X"]: void 0}, {[events[0]]: void 0}, {[events[0]]: void 0}].map(fsm2);
     const expected2 = [NO_OUTPUT, ["logOther run on "], NO_OUTPUT];
     it('runs the machine as per the graph', function () {
       assert.deepEqual(errors, [], `graphml string is correctly parsed`);
@@ -64,7 +65,7 @@ describe('Conversion yed to kingly', function () {
   });
 
   describe('no-hierarchy-events-eventless', function () {
-    const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
+    const {getKinglyTransitions, stateYed2KinglyMap, states, events, errors} =
       computeTransitionsAndStatesFromXmlString(no_hierarchy_events_eventless);
     const eventSpace = [event1, event2, unknownEvent];
     const guards = {
@@ -81,10 +82,10 @@ describe('Conversion yed to kingly', function () {
     // Two machines to test the guard and achieve all-transition coverage
     const fsmDef1 = {
       updateState,
-      initialExtendedState: { shouldReturnToA: false },
+      initialExtendedState: {shouldReturnToA: false},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards })
+      transitions: getKinglyTransitions({actionFactories, guards})
     };
     const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
     const cases = inputSpace.map(scenario => {
@@ -139,10 +140,10 @@ describe('Conversion yed to kingly', function () {
 
     const fsmDef2 = {
       updateState,
-      initialExtendedState: { shouldReturnToA: true },
+      initialExtendedState: {shouldReturnToA: true},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards })
+      transitions: getKinglyTransitions({actionFactories, guards})
     };
     const fsm2 = createStateMachine(fsmDef2, settings);
     const outputs2 = cases.map(scenario => {
@@ -214,15 +215,15 @@ describe('Conversion yed to kingly', function () {
     // use power of 2 (bit position)
     // Achtung!!!! For the tests, the order of guards in the guards array matters!!!
     // I made it the transitions in same order as the condition so easier to reason about
-    const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
+    const {getKinglyTransitions, stateYed2KinglyMap, states, events, errors} =
       computeTransitionsAndStatesFromXmlString(no_hierarchy_eventful_eventless_guards);
     const eventSpace = [
-      { event: 1 },
-      { event: 2 },
-      { event: 4 },
-      { event: 3 },
-      { event: 6 },
-      { event: 0 },
+      {event: 1},
+      {event: 2},
+      {event: 4},
+      {event: 3},
+      {event: 6},
+      {event: 0},
     ];
     const guards = {
       "shouldReturnToA": (s, e, stg) => s.shouldReturnToA,
@@ -243,10 +244,10 @@ describe('Conversion yed to kingly', function () {
     // Two machines to test the guard and achieve all-transition coverage
     const fsmDef1 = {
       updateState,
-      initialExtendedState: { shouldReturnToA: false },
+      initialExtendedState: {shouldReturnToA: false},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards })
+      transitions: getKinglyTransitions({actionFactories, guards})
     };
     const inputSpace = cartesian([0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]);
     const cases = inputSpace.map(scenario => {
@@ -311,10 +312,10 @@ describe('Conversion yed to kingly', function () {
 
     const fsmDef2 = {
       updateState,
-      initialExtendedState: { shouldReturnToA: true },
+      initialExtendedState: {shouldReturnToA: true},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards })
+      transitions: getKinglyTransitions({actionFactories, guards})
     };
     const fsm2 = createStateMachine(fsmDef2, settings);
     const outputs2 = cases.map(scenario => {
@@ -387,7 +388,7 @@ describe('Conversion yed to kingly', function () {
 
   describe('top_level_conditional_init_with_hierarchy', function () {
     // should be exact same tests than top_level_conditional_init
-    const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
+    const {getKinglyTransitions, stateYed2KinglyMap, states, events, errors} =
       computeTransitionsAndStatesFromXmlString(top_level_conditional_init_with_hierarchy);
     const guards = {
       // we test on extended state, so we test also the guard parameters
@@ -396,33 +397,33 @@ describe('Conversion yed to kingly', function () {
       "isNumber": (s, e, stg) => (typeof s.n === 'number'),
     };
     const actionFactories = {
-      logOther: (s, e, stg) => ({ outputs: `logOther run on ${s.n}`, updates: {} }),
-      logNumber: (s, e, stg) => ({ outputs: `logNumber run on ${s.n}`, updates: {} }),
+      logOther: (s, e, stg) => ({outputs: `logOther run on ${s.n}`, updates: {}}),
+      logNumber: (s, e, stg) => ({outputs: `logNumber run on ${s.n}`, updates: {}}),
     };
     const fsmDef1 = {
       updateState,
-      initialExtendedState: { n: 0 },
+      initialExtendedState: {n: 0},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards })
+      transitions: getKinglyTransitions({actionFactories, guards})
     };
     const fsm1 = createStateMachine(fsmDef1, settings);
     const fsmDef2 = {
       updateState,
-      initialExtendedState: { n: "" },
+      initialExtendedState: {n: ""},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards })
+      transitions: getKinglyTransitions({actionFactories, guards})
     };
     const fsm2 = createStateMachine(fsmDef2, settings);
 
     const outputs1 = [
-      { [events[0] + "X"]: void 0 },
-      { [events[0]]: void 0 },
-      { [events[0]]: void 0 }
+      {[events[0] + "X"]: void 0},
+      {[events[0]]: void 0},
+      {[events[0]]: void 0}
     ].map(fsm1);
     const expected1 = [NO_OUTPUT, ["logNumber run on 0"], NO_OUTPUT];
-    const outputs2 = [{ [events[0] + "X"]: void 0 }, { [events[0]]: void 0 }, { [events[0]]: void 0 }].map(fsm2);
+    const outputs2 = [{[events[0] + "X"]: void 0}, {[events[0]]: void 0}, {[events[0]]: void 0}].map(fsm2);
     const expected2 = [NO_OUTPUT, ["logOther run on "], NO_OUTPUT];
 
     it('runs the machine as per the graph', function () {
@@ -441,10 +442,10 @@ describe('Conversion yed to kingly', function () {
   });
 
   describe('hierarchy_conditional_init', function () {
-    const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
+    const {getKinglyTransitions, stateYed2KinglyMap, states, events, errors} =
       computeTransitionsAndStatesFromXmlString(hierarchy_conditional_init);
-    const settings1 = { n: 0 };
-    const settings2 = { n: "" };
+    const settings1 = {n: 0};
+    const settings2 = {n: ""};
     // We do the branching on `settings` so we tests also the signature of the guards
     // in passing
     const guards = {
@@ -462,12 +463,12 @@ describe('Conversion yed to kingly', function () {
       initialExtendedState: void 0,
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards })
+      transitions: getKinglyTransitions({actionFactories, guards})
     };
     const fsm1 = createStateMachine(fsmDef1, settings1);
     const outputs1 = [
       unknownEvent,
-      { event1: void 0 },
+      {event1: void 0},
     ].map(fsm1);
     const expected1 = [
       null,
@@ -479,12 +480,12 @@ describe('Conversion yed to kingly', function () {
       initialExtendedState: void 0,
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards })
+      transitions: getKinglyTransitions({actionFactories, guards})
     };
     const fsm2 = createStateMachine(fsmDef2, settings2);
     const outputs2 = [
       unknownEvent,
-      { event1: void 0 },
+      {event1: void 0},
     ].map(fsm2);
     const expected2 = [
       null,
@@ -508,7 +509,7 @@ describe('Conversion yed to kingly', function () {
 
   describe('deep_hierarchy_conditional_automatic_init_event_eventless', function () {
     // should be exact same tests than top_level_conditional_init
-    const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
+    const {getKinglyTransitions, stateYed2KinglyMap, states, events, errors} =
       computeTransitionsAndStatesFromXmlString(deep_hierarchy_conditional_automatic_init_event_eventless);
     const guards = {
       // we test on extended state, so we test also the guard parameters
@@ -534,42 +535,42 @@ describe('Conversion yed to kingly', function () {
       initialExtendedState: void 0,
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards })
+      transitions: getKinglyTransitions({actionFactories, guards})
     };
     const outputs1 = [
-      { event1: { n: 0 } },
-      { event1: void 0 },
-      { event1: void 0 },
-      { event2: { shouldReturnToA: false } },
-      { event2: { shouldReturnToA: false } },
+      {event1: {n: 0}},
+      {event1: void 0},
+      {event1: void 0},
+      {event2: {shouldReturnToA: false}},
+      {event2: {shouldReturnToA: false}},
     ].map(createStateMachine(fsmDef, settings));
     const outputs2 = [
-      { event1: { n: 0 } },
-      { event1: void 0 },
-      { event2: void 0 },
-      { event1: { shouldReturnToA: false } },
-      { event1: { shouldReturnToA: false } },
+      {event1: {n: 0}},
+      {event1: void 0},
+      {event2: void 0},
+      {event1: {shouldReturnToA: false}},
+      {event1: {shouldReturnToA: false}},
     ].map(createStateMachine(fsmDef, settings));
     const outputs3 = [
-      { event1: { n: 0 } },
-      { event1: void 0 },
-      { event1: void 0 },
-      { event2: { shouldReturnToA: true } },
-      { event2: { shouldReturnToA: false } },
+      {event1: {n: 0}},
+      {event1: void 0},
+      {event1: void 0},
+      {event2: {shouldReturnToA: true}},
+      {event2: {shouldReturnToA: false}},
     ].map(createStateMachine(fsmDef, settings));
     const outputs4 = [
-      { event1: { n: 0 } },
-      { event1: void 0 },
-      { event2: void 0 },
-      { event1: { shouldReturnToA: true } },
-      { event1: { shouldReturnToA: false } },
+      {event1: {n: 0}},
+      {event1: void 0},
+      {event2: void 0},
+      {event1: {shouldReturnToA: true}},
+      {event1: {shouldReturnToA: false}},
     ].map(createStateMachine(fsmDef, settings));
     const outputs5 = [
-      { event1: { n: "" } },
-      { event1: void 0 },
-      { event2: void 0 },
-      { event1: { shouldReturnToA: true } },
-      { event1: { shouldReturnToA: false } },
+      {event1: {n: ""}},
+      {event1: void 0},
+      {event2: void 0},
+      {event1: {shouldReturnToA: true}},
+      {event1: {shouldReturnToA: false}},
     ].map(createStateMachine(fsmDef, settings));
 
     it('runs the machine as per the graph', function () {
@@ -629,6 +630,211 @@ describe('Conversion yed to kingly', function () {
         null,
         null,
       ], `ok`);
+    });
+  });
+
+  describe('hierarchy_history_H', function () {
+    const {getKinglyTransitions, stateYed2KinglyMap, states, events, errors} =
+      computeTransitionsAndStatesFromXmlString(hierarchy_history_H);
+    const eventSpace = [event1, event2, event3];
+    const guards = {};
+    const actionFactories = {
+      logGroup1toC: (s, e, stg) => traceTransition("A -> B"),
+      logBtoC: (s, e, stg) => traceTransition("B -> C"),
+      logBtoD: (s, e, stg) => traceTransition("B -> D"),
+      logCtoD: (s, e, stg) => traceTransition("C -> D"),
+      logDtoGroup1H: (s, e, stg) => traceTransition("D -> Group1H"),
+    };
+
+    // Two machines to test the guard and achieve all-transition coverage
+    const fsmDef1 = {
+      updateState,
+      initialExtendedState: {},
+      events,
+      states,
+      transitions: getKinglyTransitions({actionFactories, guards})
+    };
+    const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
+    const cases = inputSpace.map(scenario => {
+      return [
+        eventSpace[scenario[0]],
+        eventSpace[scenario[1]],
+        eventSpace[scenario[2]],
+      ]
+    })
+    const outputs1 = cases.map(scenario => {
+      const fsm1 = createStateMachine(fsmDef1, settings);
+      return scenario.map(fsm1)
+    });
+    const expected1 = [
+      // [event1, event1, event1]
+      [['B -> D'], null, null],
+      [['B -> D'], null, null],
+      [['B -> D'], null, [null, 'D -> Group1H']],
+      // [event1, event2, event1]
+      [['B -> D'], null, null],
+      [['B -> D'], null, null],
+      [['B -> D'], null, [null, 'D -> Group1H']],
+      // [event1, event3, event1]
+      [['B -> D'], [null, 'D -> Group1H'], null],
+      [['B -> D'], [null, 'D -> Group1H'], null],
+      [['B -> D'],
+        [null, 'D -> Group1H'],
+        [null, 'D -> Group1H']],
+      // [event2, event1, event1]
+      [['B -> C'], ['C -> D'], null],
+      [['B -> C'], ['C -> D'], null],
+      [['B -> C'], ['C -> D'], [null, 'D -> Group1H']],
+      // [event2, event2, event1]
+      [['B -> C'], null, ['C -> D']],
+      [['B -> C'], null, null],
+      [['B -> C'], null, [null, 'D -> Group1H']],
+      // [event2, event3, event1]
+      [['B -> C'], [null, 'D -> Group1H'], ['C -> D']],
+      [['B -> C'], [null, 'D -> Group1H'], null],
+      [['B -> C'],
+        [null, 'D -> Group1H'],
+        [null, 'D -> Group1H']],
+      // [event3, event1, event1]
+      [[null, 'D -> Group1H'], ['B -> D'], null],
+      [[null, 'D -> Group1H'], ['B -> D'], null],
+      [[null, 'D -> Group1H'],
+        ['B -> D'],
+        [null, 'D -> Group1H']],
+      // [event3, event2, event1]
+      [[null, 'D -> Group1H'], ['B -> C'], ['C -> D']],
+      [[null, 'D -> Group1H'], ['B -> C'], null],
+      [[null, 'D -> Group1H'],
+        ['B -> C'],
+        [null, 'D -> Group1H']],
+      // [event3, event3, event1]
+      [[null, 'D -> Group1H'],
+        [null, 'D -> Group1H'],
+        ['B -> D']],
+      [[null, 'D -> Group1H'],
+        [null, 'D -> Group1H'],
+        ['B -> C']],
+      [[null, 'D -> Group1H'],
+        [null, 'D -> Group1H'],
+        [null, 'D -> Group1H']]
+    ];
+
+    it('runs the machine as per the graph', function () {
+      assert.deepEqual(errors, [], `graphml string is correctly parsed`);
+      assert.deepEqual(events, ["event3", "event1", "event2"], `The list of events is correctly parsed`);
+      assert.deepEqual(states, {
+        "n1ღD": "",
+        "n2ღ": {
+          "n2::n0ღB": "",
+          "n2::n1ღC": "",
+          "n2::n2ღD": "",
+          "n2::n3ღH": "",
+        }
+      }, `The hierarchy of states is correctly parsed`);
+      assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
+    });
+  });
+
+  describe('hierarchy_history_H_star', function () {
+    // Should be exactly the same as the hierarchy_history_H case
+    const {getKinglyTransitions, stateYed2KinglyMap, states, events, errors} =
+      computeTransitionsAndStatesFromXmlString(hierarchy_history_H_star);
+    const eventSpace = [event1, event2, event3];
+    const guards = {};
+    const actionFactories = {
+      logGroup1toC: (s, e, stg) => traceTransition("A -> B"),
+      logBtoC: (s, e, stg) => traceTransition("B -> C"),
+      logBtoD: (s, e, stg) => traceTransition("B -> D"),
+      logCtoD: (s, e, stg) => traceTransition("C -> D"),
+      "logDtoGroup1H*": (s, e, stg) => traceTransition("D -> Group1H*"),
+    };
+
+    // Two machines to test the guard and achieve all-transition coverage
+    const fsmDef1 = {
+      updateState,
+      initialExtendedState: {},
+      events,
+      states,
+      transitions: getKinglyTransitions({actionFactories, guards})
+    };
+    const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
+    const cases = inputSpace.map(scenario => {
+      return [
+        eventSpace[scenario[0]],
+        eventSpace[scenario[1]],
+        eventSpace[scenario[2]],
+      ]
+    })
+    const outputs1 = cases.map(scenario => {
+      const fsm1 = createStateMachine(fsmDef1, settings);
+      return scenario.map(fsm1)
+    });
+    const expected1 = [
+      // [event1, event1, event1]
+      [['B -> D'], null, null],
+      [['B -> D'], null, null],
+      [['B -> D'], null, [null, 'D -> Group1H*']],
+      // [event1, event2, event1]
+      [['B -> D'], null, null],
+      [['B -> D'], null, null],
+      [['B -> D'], null, [null, 'D -> Group1H*']],
+      // [event1, event3, event1]
+      [['B -> D'], [null, 'D -> Group1H*'], null],
+      [['B -> D'], [null, 'D -> Group1H*'], null],
+      [['B -> D'],
+        [null, 'D -> Group1H*'],
+        [null, 'D -> Group1H*']],
+      // [event2, event1, event1]
+      [['B -> C'], ['C -> D'], null],
+      [['B -> C'], ['C -> D'], null],
+      [['B -> C'], ['C -> D'], [null, 'D -> Group1H*']],
+      // [event2, event2, event1]
+      [['B -> C'], null, ['C -> D']],
+      [['B -> C'], null, null],
+      [['B -> C'], null, [null, 'D -> Group1H*']],
+      // [event2, event3, event1]
+      [['B -> C'], [null, 'D -> Group1H*'], ['C -> D']],
+      [['B -> C'], [null, 'D -> Group1H*'], null],
+      [['B -> C'],
+        [null, 'D -> Group1H*'],
+        [null, 'D -> Group1H*']],
+      // [event3, event1, event1]
+      [[null, 'D -> Group1H*'], ['B -> D'], null],
+      [[null, 'D -> Group1H*'], ['B -> D'], null],
+      [[null, 'D -> Group1H*'],
+        ['B -> D'],
+        [null, 'D -> Group1H*']],
+      // [event3, event2, event1]
+      [[null, 'D -> Group1H*'], ['B -> C'], ['C -> D']],
+      [[null, 'D -> Group1H*'], ['B -> C'], null],
+      [[null, 'D -> Group1H*'],
+        ['B -> C'],
+        [null, 'D -> Group1H*']],
+      // [event3, event3, event1]
+      [[null, 'D -> Group1H*'],
+        [null, 'D -> Group1H*'],
+        ['B -> D']],
+      [[null, 'D -> Group1H*'],
+        [null, 'D -> Group1H*'],
+        ['B -> C']],
+      [[null, 'D -> Group1H*'],
+        [null, 'D -> Group1H*'],
+        [null, 'D -> Group1H*']]
+    ];
+
+    it('runs the machine as per the graph', function () {
+      assert.deepEqual(errors, [], `graphml string is correctly parsed`);
+      assert.deepEqual(events, ["event3", "event1", "event2"], `The list of events is correctly parsed`);
+      assert.deepEqual(states, {
+        "n1ღD": "",
+        "n2ღ": {
+          "n2::n0ღB": "",
+          "n2::n1ღC": "",
+          "n2::n2ღD": "",
+          "n2::n3ღH*": "",
+        }
+      }, `The hierarchy of states is correctly parsed`);
+      assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
     });
   });
 
