@@ -38,7 +38,7 @@ function handleAggregateEdgesPerFromEventKeyErrors(e, errors, [hashMap, yedEdge]
     when: `building (from, event) hashmap`,
     location: `computeTransitionsAndStatesFromXmlString > aggregateEdgesPerFromEventKey`,
     info: { hashMap: JSON.parse(JSON.stringify(hashMap)), yedEdge },
-    message,
+    message: e.message,
     possibleCauses: [
       `File is not a valid graphML file`,
       `File is not a valid yed-generated graphML file`,

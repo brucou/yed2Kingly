@@ -439,6 +439,199 @@ describe('Conversion yed to kingly', function () {
       assert.deepEqual(outputs2, expected2, `Branch machine initialized with string ok`);
     });
   });
+
+  describe('hierarchy_conditional_init', function () {
+    const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
+      computeTransitionsAndStatesFromXmlString(hierarchy_conditional_init);
+    const settings1 = { n: 0 };
+    const settings2 = { n: "" };
+    // We do the branching on `settings` so we tests also the signature of the guards
+    // in passing
+    const guards = {
+      "not(isNumber)": (s, e, stg) => (typeof stg.n !== 'number'),
+      "isNumber": (s, e, stg) => (typeof stg.n === 'number'),
+    };
+    const actionFactories = {
+      logAtoB: (s, e, stg) => traceTransition("A -> B"),
+      logAtoC: (s, e, stg) => traceTransition("A -> C"),
+    };
+
+    // Two machines to test the guard and achieve all-transition coverage
+    const fsmDef1 = {
+      updateState,
+      initialExtendedState: void 0,
+      events,
+      states,
+      transitions: getKinglyTransitions({ actionFactories, guards })
+    };
+    const fsm1 = createStateMachine(fsmDef1, settings1);
+    const outputs1 = [
+      unknownEvent,
+      { event1: void 0 },
+    ].map(fsm1);
+    const expected1 = [
+      null,
+      [null, "A -> B"],
+    ];
+
+    const fsmDef2 = {
+      updateState,
+      initialExtendedState: void 0,
+      events,
+      states,
+      transitions: getKinglyTransitions({ actionFactories, guards })
+    };
+    const fsm2 = createStateMachine(fsmDef2, settings2);
+    const outputs2 = [
+      unknownEvent,
+      { event1: void 0 },
+    ].map(fsm2);
+    const expected2 = [
+      null,
+      [null, "A -> C"],
+    ];
+
+    it('runs the machine as per the graph', function () {
+      assert.deepEqual(errors, [], `graphml string is correctly parsed`);
+      assert.deepEqual(events, ["event1"], `The list of events is correctly parsed`);
+      assert.deepEqual(states, {
+        "n1ღA": "",
+        "n2ღ": {
+          "n2::n0ღB": "",
+          "n2::n2ღC": "",
+        },
+      }, `The hierarchy of states is correctly parsed`);
+      assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
+      assert.deepEqual(outputs2, expected2, `Branch machine initialized with string ok`);
+    });
+  });
+
+  describe('deep_hierarchy_conditional_automatic_init_event_eventless', function () {
+    // should be exact same tests than top_level_conditional_init
+    const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
+      computeTransitionsAndStatesFromXmlString(deep_hierarchy_conditional_automatic_init_event_eventless);
+    const guards = {
+      // we test on extended state, so we test also the guard parameters
+      // are as expected
+      "not(isNumber)": (s, e, stg) => (typeof e.n !== 'number'),
+      "isNumber": (s, e, stg) => (typeof e.n === 'number'),
+      "shouldReturnToA": (s, e, stg) => e.shouldReturnToA,
+    };
+    const actionFactories = {
+      logAtoGroup1: (s, e, stg) => traceTransition("A -> Group1"),
+      logGroup1toGroup2: (s, e, stg) => traceTransition("Group1 -> B"),
+      logGroup2toGroup3: (s, e, stg) => traceTransition("Group2 -> Group3"),
+      logGroup3toB: (s, e, stg) => traceTransition("Group3 -> B"),
+      logGroup3toC: (s, e, stg) => traceTransition("Group3 -> C"),
+      logAtoB: (s, e, stg) => traceTransition("A -> B"),
+      logAtoC: (s, e, stg) => traceTransition("A -> C"),
+      logBtoD: (s, e, stg) => traceTransition("B -> D"),
+      logDtoA: (s, e, stg) => traceTransition("D -> A"),
+      logCtoD: (s, e, stg) => traceTransition("C -> D"),
+    };
+    const fsmDef = {
+      updateState,
+      initialExtendedState: void 0,
+      events,
+      states,
+      transitions: getKinglyTransitions({ actionFactories, guards })
+    };
+    const outputs1 = [
+      { event1: { n: 0 } },
+      { event1: void 0 },
+      { event1: void 0 },
+      { event2: { shouldReturnToA: false } },
+      { event2: { shouldReturnToA: false } },
+    ].map(createStateMachine(fsmDef, settings));
+    const outputs2 = [
+      { event1: { n: 0 } },
+      { event1: void 0 },
+      { event2: void 0 },
+      { event1: { shouldReturnToA: false } },
+      { event1: { shouldReturnToA: false } },
+    ].map(createStateMachine(fsmDef, settings));
+    const outputs3 = [
+      { event1: { n: 0 } },
+      { event1: void 0 },
+      { event1: void 0 },
+      { event2: { shouldReturnToA: true } },
+      { event2: { shouldReturnToA: false } },
+    ].map(createStateMachine(fsmDef, settings));
+    const outputs4 = [
+      { event1: { n: 0 } },
+      { event1: void 0 },
+      { event2: void 0 },
+      { event1: { shouldReturnToA: true } },
+      { event1: { shouldReturnToA: false } },
+    ].map(createStateMachine(fsmDef, settings));
+    const outputs5 = [
+      { event1: { n: "" } },
+      { event1: void 0 },
+      { event2: void 0 },
+      { event1: { shouldReturnToA: true } },
+      { event1: { shouldReturnToA: false } },
+    ].map(createStateMachine(fsmDef, settings));
+
+    it('runs the machine as per the graph', function () {
+      assert.deepEqual(errors, [], `graphml string is correctly parsed`);
+      assert.deepEqual(events, ['event1', 'event2'], `events correctly parsed`);
+      assert.deepEqual(states, {
+        "n1ღA": "",
+        "n2ღ": {
+          "n2::n0ღB": "",
+          "n2::n2ღ": {
+            "n2::n2::n1ღ": {
+              "n2::n2::n1::n0ღB": "",
+              "n2::n2::n1::n2ღC": "",
+              "n2::n2::n1::n3ღ": {
+                "n2::n2::n1::n3::n0ღA": "",
+                "n2::n2::n1::n3::n1ღB": "",
+                "n2::n2::n1::n3::n2ღC": "",
+                "n2::n2::n1::n3::n3ღD": "",
+              },
+            }
+          },
+        },
+      }, `state hierarchy correctly parsed`);
+      // !!! mocha diff shows `null` as [null]!!!
+      assert.deepEqual(outputs1, [
+        ["A -> Group1", "Group1 -> B", null, "Group2 -> Group3", "Group3 -> B"],
+        [null, null],
+        ["A -> B"],
+        ["B -> D", null],
+        null
+      ], `ok`);
+      assert.deepEqual(outputs2, [
+        ["A -> Group1", "Group1 -> B", null, "Group2 -> Group3", "Group3 -> B"],
+        [null, null],
+        ["A -> C"],
+        ["C -> D", null],
+        null
+      ], `ok`);
+      assert.deepEqual(outputs3, [
+        ["A -> Group1", "Group1 -> B", null, "Group2 -> Group3", "Group3 -> B"],
+        [null, null],
+        ["A -> B"],
+        ["B -> D", "D -> A"],
+        ["A -> C"],
+      ], `ok`);
+      assert.deepEqual(outputs4, [
+        ["A -> Group1", "Group1 -> B", null, "Group2 -> Group3", "Group3 -> B"],
+        [null, null],
+        ["A -> C"],
+        ["C -> D", "D -> A"],
+        ["A -> B"],
+      ], `ok`);
+      assert.deepEqual(outputs5, [
+        ["A -> Group1", "Group1 -> B", null, "Group2 -> Group3", "Group3 -> C"],
+        null,
+        null,
+        null,
+        null,
+      ], `ok`);
+    });
+  });
+
 });
 
 // TODO: get a real example (can be complex, that's the point,

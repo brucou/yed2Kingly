@@ -1,8 +1,8 @@
-const { INIT_STATE, INIT_EVENT } = require('kingly')
-const { mapOverTree } = require('fp-rosetree');
-const { lensPath, view, mergeAll, concat, forEachObjIndexed } = require('ramda');
-const { handleAggregateEdgesPerFromEventKeyErrors, T, tryCatchFactory, Yed2KinglyConversionError, handleParseGraphMlStringErrors, isCompoundState, isInitialTransition, isSimplifiableSyntax, isTopLevelInitTransition, getYedParentNode, computeKinglyDestinationState, mapActionFactoryStrToActionFactoryFn, mapGuardStrToGuardFn, yedState2KinglyState, parseGraphMlString } = require('./helpers');
-const { DEFAULT_ACTION_FACTORY_STR, STATE_LABEL_SEP, YED_ENTRY_STATE, YED_LABEL_DECODE_SEP } = require('./properties');
+const {INIT_STATE, INIT_EVENT} = require('kingly')
+const {mapOverTree} = require('fp-rosetree');
+const {lensPath, view, mergeAll, concat, forEachObjIndexed} = require('ramda');
+const {handleAggregateEdgesPerFromEventKeyErrors, T, tryCatchFactory, Yed2KinglyConversionError, handleParseGraphMlStringErrors, isCompoundState, isInitialTransition, isSimplifiableSyntax, isTopLevelInitTransition, getYedParentNode, computeKinglyDestinationState, mapActionFactoryStrToActionFactoryFn, mapGuardStrToGuardFn, yedState2KinglyState, parseGraphMlString} = require('./helpers');
+const {DEFAULT_ACTION_FACTORY_STR, STATE_LABEL_SEP, YED_ENTRY_STATE, YED_LABEL_DECODE_SEP} = require('./properties');
 
 // Lenses to access fields deep in xml json
 const edgeOriginStateLens = lensPath(['@_source']);
@@ -13,7 +13,7 @@ const compoundStateLens = lensPath(['y:ProxyAutoBoundsNode', 'y:Realizers', 'y:G
 const getYedEdgeLabel = edgeML => {
   const data = Array.isArray(edgeML.data) ? edgeML.data : [edgeML.data];
   const d10Record = data.find(d => d['@_key'] === 'd10');
-  return view(edgeMlLabelLens, d10Record) || "";
+  return view(edgeMlLabelLens, d10Record);
 };
 
 // Lenses for traversing the syntax tree
@@ -22,10 +22,10 @@ const getLabel = graphObj => {
   const lens = isCompoundState(graphObj) ? compoundStateLens : atomicStateLens;
   const dataKeys = Array.isArray(graphData)
     ? graphData.reduce((acc, dataItem) => {
-      return Object.assign(acc, { [dataItem['@_key']]: view(lens, dataItem) })
+      return Object.assign(acc, {[dataItem['@_key']]: view(lens, dataItem)})
     }, {})
     : graphData['@_key'] === 'd6'
-      ? { d6: view(lens, graphData) }
+      ? {d6: view(lens, graphData)}
       : {};
   const stateLabel = dataKeys.d6 || "";
 
@@ -39,14 +39,14 @@ const constructStateHierarchy = (label, children) => {
   return stateLabel === YED_ENTRY_STATE
     ? {}
     : children && children.length === 0
-      ? { [_label]: "" }
-      : { [_label]: mergeAll(children) }
+      ? {[_label]: ""}
+      : {[_label]: mergeAll(children)}
 };
 const constructStateYed2KinglyMap = (label, children) => {
   const [yedLabel, stateLabel] = label;
   const newMap = yedLabel === void 0
     ? {}
-    : { [label[0]]: label[1] }
+    : {[label[0]]: label[1]}
 
   return mergeAll(concat(children, [newMap]))
 };
@@ -61,14 +61,16 @@ const stateYed2KinglyLens = {
   constructTree: constructStateYed2KinglyMap,
 };
 
-function aggregateEdgesPerFromEventKey({ edges: hashMap, events }, yedEdge) {
+function aggregateEdgesPerFromEventKey({edges: hashMap, events}, yedEdge) {
   const from = view(edgeOriginStateLens, yedEdge).trim();
   const to = view(edgeTargetStateLens, yedEdge).trim();
   // Label as in yEd i.e. `x [y] / z` string, with x, y, z all optionals
   // Also: z is a string representing a function, but not a function
   const yedEdgeLabel = getYedEdgeLabel(yedEdge);
   const yedEdgeLabelRegExp = /\[(.*)\]/;
-  const expressionList = yedEdgeLabel.split(yedEdgeLabelRegExp);
+  const expressionList = yedEdgeLabel
+    ? yedEdgeLabel.split(yedEdgeLabelRegExp)
+    : [`/${DEFAULT_ACTION_FACTORY_STR}`];
 
   // Possible cases:
   // x [y] / z: expressionList.length === 3
@@ -100,15 +102,15 @@ function aggregateEdgesPerFromEventKey({ edges: hashMap, events }, yedEdge) {
 
   hashMap[fromEventKey] = hashMap[fromEventKey] || [];
   hashMap[fromEventKey] = hashMap[fromEventKey].concat([
-    { predicate: guard.trim(), to: to.trim(), actionFactory: actionFactory.trim() }
+    {predicate: guard.trim(), to: to.trim(), actionFactory: actionFactory.trim()}
   ]);
-  return { edges: hashMap, events: event ? events.add(event) : events }
+  return {edges: hashMap, events: event ? events.add(event) : events}
 }
 
 function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
   // Transitions are computed by means of a function in which the mapping between actions and guards
   // strings and the respective JavaScript functions is injected
-  return function getKinglyTransitions({ actionFactories, guards }) {
+  return function getKinglyTransitions({actionFactories, guards}) {
     let transitions = [];
     forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
       // Example:
@@ -140,7 +142,7 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
       // - same for guards
       // - no spacing in actions...
       if (isSimplifiableSyntax(arrGuardsTargetActions)) {
-        const { to: yedTo, actionFactory: actionFactoryStr } = arrGuardsTargetActions[0];
+        const {to: yedTo, actionFactory: actionFactoryStr} = arrGuardsTargetActions[0];
 
         transitions.push({
           from,
@@ -154,7 +156,7 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
           from,
           event,
           guards: arrGuardsTargetActions.map(arrGuardsTargetAction => {
-            const { predicate: predicateStr, to: yedTo, actionFactory: actionFactoryStr } = arrGuardsTargetAction;
+            const {predicate: predicateStr, to: yedTo, actionFactory: actionFactoryStr} = arrGuardsTargetAction;
             return {
               predicate: mapGuardStrToGuardFn(guards, predicateStr),
               to: computeKinglyDestinationState(stateYed2KinglyMap, yedTo),
@@ -169,6 +171,8 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
   }
 }
 
+// TODO: apparently empty actions are set undefined instead of action_identity!!
+// occurs likely when there is nothing on the edge label and not init transition edge
 // TODO: checking
 // - check directly the generated states and transitions with Kingly but now!
 // - but maybe also check basic stuff about states (not empty), node labels (only one [] etc)
@@ -179,7 +183,6 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
 // No event allowed on initial states (top-level or else)
 // - any yed of the multiple graph types seem to all be graph, with only visuals changing
 //   so this algorithm should be fine even with swimlanes and fancy stuff
-// TODO: il faut calculer aussi the events array!!
 function computeTransitionsAndStatesFromXmlString(yedString) {
   // Building the error accumulation capability
   // Could thread this with applicative functors but keeping it simple and plain
@@ -197,7 +200,7 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   //   - yed: node with label YED_ENTRY_STATE
   // - history pseudo-states
   //   - yed: node with label YED_SHALLOW_HISTORY_STATE or YED_DEEP_HISTORY_STATE
-  const { graphml: graphObj } = tryCatch(parseGraphMlString, handleParseGraphMlStringErrors)(yedString)
+  const {graphml: graphObj} = tryCatch(parseGraphMlString, handleParseGraphMlStringErrors)(yedString)
   if (_errors.length > 0) throw new Yed2KinglyConversionError(_errors);
 
   const stateHierarchy = mapOverTree(stateHierarchyLens, x => x, graphObj)[STATE_LABEL_SEP];
@@ -211,9 +214,9 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   // To prepare for deriving transitions, we use a hashmap which conflates all matching transitions
   // in an array:
   // edges ~~ {[from<|>event]: [...]}
-  const { edges, events } = yedEdges.reduce(
+  const {edges, events} = yedEdges.reduce(
     tryCatch(aggregateEdgesPerFromEventKey, handleAggregateEdgesPerFromEventKeyErrors),
-    { edges: {}, events: new Set() }
+    {edges: {}, events: new Set()}
   );
   if (_errors.length > 0) throw new Yed2KinglyConversionError(_errors);
 
