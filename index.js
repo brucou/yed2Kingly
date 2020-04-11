@@ -174,7 +174,7 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
 // TODO: apparently empty actions are set undefined instead of action_identity!!
 // occurs likely when there is nothing on the edge label and not init transition edge
 // TODO: checking
-// - check directly the generated states and transitions with Kingly but now!
+// - check directly the generated states and transitions with Kingly but now! ABSOLUTELY DO IT
 // - but maybe also check basic stuff about states (not empty), node labels (only one [] etc)
 // Only ever one [x]
 // Only ever one /

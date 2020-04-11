@@ -12,7 +12,7 @@ const updateState = (extendedState, updates) => Object.assign({}, extendedState,
 const traceTransition = str => ({outputs: str, updates: {},});
 
 describe('Conversion yed to kingly', function () {
-  const {top_level_conditional_init, deep_hierarchy_conditional_automatic_init_event_eventless, deep_hierarchy_history_H_star, hierarchy_conditional_init, hierarchy_history_H, hierarchy_history_H_star, no_hierarchy_eventful_eventless_guards, no_hierarchy_events_eventless, top_level_conditional_init_with_hierarchy,} = graphs;
+  const {top_level_conditional_init, deep_hierarchy_conditional_automatic_init_event_eventless, deep_hierarchy_history_H_star, hierarchy_conditional_init, hierarchy_history_H, hierarchy_history_H_star, no_hierarchy_eventful_eventless_guards, no_hierarchy_events_eventless, top_level_conditional_init_with_hierarchy,deep_hierarchy_history_H} = graphs;
   const settings = {};
   const event1 = {event1: void 0};
   const event2 = {event2: void 0};
@@ -639,7 +639,7 @@ describe('Conversion yed to kingly', function () {
     const eventSpace = [event1, event2, event3];
     const guards = {};
     const actionFactories = {
-      logGroup1toC: (s, e, stg) => traceTransition("A -> B"),
+      logGroup1toC: (s, e, stg) => traceTransition("Group1 -> C"),
       logBtoC: (s, e, stg) => traceTransition("B -> C"),
       logBtoD: (s, e, stg) => traceTransition("B -> D"),
       logCtoD: (s, e, stg) => traceTransition("C -> D"),
@@ -742,7 +742,7 @@ describe('Conversion yed to kingly', function () {
     const eventSpace = [event1, event2, event3];
     const guards = {};
     const actionFactories = {
-      logGroup1toC: (s, e, stg) => traceTransition("A -> B"),
+      logGroup1toC: (s, e, stg) => traceTransition("Group1 -> C"),
       logBtoC: (s, e, stg) => traceTransition("B -> C"),
       logBtoD: (s, e, stg) => traceTransition("B -> D"),
       logCtoD: (s, e, stg) => traceTransition("C -> D"),
@@ -832,6 +832,230 @@ describe('Conversion yed to kingly', function () {
           "n2::n1ღC": "",
           "n2::n2ღD": "",
           "n2::n3ღH*": "",
+        }
+      }, `The hierarchy of states is correctly parsed`);
+      assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
+    });
+  });
+
+  describe('deep_hierarchy_history_H_star', function () {
+    // Should be exactly the same as the hierarchy_history_H case
+    const {getKinglyTransitions, stateYed2KinglyMap, states, events, errors} =
+      computeTransitionsAndStatesFromXmlString(deep_hierarchy_history_H_star);
+    const eventSpace = [event1, event2, event3];
+    const guards = {};
+    const actionFactories = {
+      logGroup1toC: (s, e, stg) => traceTransition("Group1 -> C"),
+      logGroup1toD: (s, e, stg) => traceTransition("Group1 -> D"),
+      logGroup1toE: (s, e, stg) => traceTransition("Group1 -> E"),
+      logBtoC: (s, e, stg) => traceTransition("B -> C"),
+      logBtoD: (s, e, stg) => traceTransition("B -> D"),
+      logCtoD: (s, e, stg) => traceTransition("C -> D"),
+      logDtoD: (s, e, stg) => traceTransition("D -> D"),
+      "logGroup1toH*": (s, e, stg) => traceTransition("Group1 -> Group1H*"),
+    };
+
+    // Two machines to test the guard and achieve all-transition coverage
+    const fsmDef1 = {
+      updateState,
+      initialExtendedState: {},
+      events,
+      states,
+      transitions: getKinglyTransitions({actionFactories, guards})
+    };
+    const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
+    const cases = inputSpace.map(scenario => {
+      return [
+        eventSpace[scenario[0]],
+        eventSpace[scenario[1]],
+        eventSpace[scenario[2]],
+      ]
+    })
+    const outputs1 = cases.map(scenario => {
+      const fsm1 = createStateMachine(fsmDef1, settings);
+      return scenario.map(fsm1)
+    });
+    const expected1 = [
+        // [event1, event1, event1]
+        [['B -> D'], ['D -> D'], null],
+        [['B -> D'], ['D -> D'], null],
+        [['B -> D'], ['D -> D'], ['Group1 -> Group1H*', null]],
+        // [event1, event2, event1]
+        [['B -> D'], null, ['D -> D']],
+        [['B -> D'], null, null],
+        [['B -> D'], null, ['Group1 -> Group1H*', null]],
+        // [event1, event3, event1]
+        [['B -> D'], ['Group1 -> Group1H*', null], ['D -> D']],
+        [['B -> D'], ['Group1 -> Group1H*', null], null],
+        [['B -> D'],
+          ['Group1 -> Group1H*', null],
+          ['Group1 -> Group1H*', null]],
+        // [event2, event1, event1]
+        [['B -> C', 'C -> D'], null, null],
+        [['B -> C', 'C -> D'], null, null],
+        [['B -> C', 'C -> D'], null, ['Group1 -> Group1H*', null
+        ]],
+        // [event2, event2, event1]
+        [['B -> C', 'C -> D'], null, null],
+        [['B -> C', 'C -> D'], null, null],
+        [['B -> C', 'C -> D'], null, ['Group1 -> Group1H*', null
+        ]],
+        // [event2, event3, event1]
+        [['B -> C', 'C -> D'], ['Group1 -> Group1H*', null], null],
+        [['B -> C', 'C -> D'], ['Group1 -> Group1H*', null], null],
+        [['B -> C', 'C -> D'],
+          ['Group1 -> Group1H*', null],
+          ['Group1 -> Group1H*', null]],
+        // [event3, event1, event1]
+        [['Group1 -> Group1H*', null], ['B -> D'], ['D -> D']
+        ],
+        [['Group1 -> Group1H*', null], ['B -> D'], null],
+        [['Group1 -> Group1H*', null],
+          ['B -> D'],
+          ['Group1 -> Group1H*', null]],
+        // [event3, event2, event1]
+        [['Group1 -> Group1H*', null], ['B -> C', 'C -> D'], null],
+        [['Group1 -> Group1H*', null], ['B -> C', 'C -> D'], null],
+        [['Group1 -> Group1H*', null],
+          ['B -> C', 'C -> D'],
+          ['Group1 -> Group1H*', null]],
+        // [event3, event3, event1]
+        [['Group1 -> Group1H*', null],
+          ['Group1 -> Group1H*', null],
+          ['B -> D']],
+        [['Group1 -> Group1H*', null],
+          ['Group1 -> Group1H*', null],
+          ['B -> C', 'C -> D']],
+        [['Group1 -> Group1H*', null],
+          ['Group1 -> Group1H*', null],
+          ['Group1 -> Group1H*', null]]
+    ];
+
+    it('runs the machine as per the graph', function () {
+      assert.deepEqual(errors, [], `graphml string is correctly parsed`);
+      assert.deepEqual(events, ["event3", "event2", "event1"], `The list of events is correctly parsed`);
+      assert.deepEqual(states, {
+        "n1ღE": "",
+        "n2ღ": {
+          "n2::n0ღB": "",
+          "n2::n1ღC": "",
+          "n2::n2ღ": {
+            "n2::n2::n0ღD": "",
+            "n2::n2::n2ღD": "",
+          },
+          "n2::n4ღH*": "",
+        }
+      }, `The hierarchy of states is correctly parsed`);
+      assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
+    });
+  });
+
+  describe('deep_hierarchy_history_H', function () {
+    // Should be exactly the same as the hierarchy_history_H case
+    const {getKinglyTransitions, stateYed2KinglyMap, states, events, errors} =
+      computeTransitionsAndStatesFromXmlString(deep_hierarchy_history_H);
+    const eventSpace = [event1, event2, event3];
+    const guards = {};
+    const actionFactories = {
+      logGroup1toC: (s, e, stg) => traceTransition("Group1 -> C"),
+      logGroup1toD: (s, e, stg) => traceTransition("Group1 -> D"),
+      logGroup1toE: (s, e, stg) => traceTransition("Group1 -> E"),
+      logBtoC: (s, e, stg) => traceTransition("B -> C"),
+      logBtoD: (s, e, stg) => traceTransition("B -> D"),
+      logCtoD: (s, e, stg) => traceTransition("C -> D"),
+      logDtoD: (s, e, stg) => traceTransition("D -> D"),
+      "logGroup1toH": (s, e, stg) => traceTransition("Group1 -> Group1H"),
+    };
+
+    // Two machines to test the guard and achieve all-transition coverage
+    const fsmDef1 = {
+      updateState,
+      initialExtendedState: {},
+      events,
+      states,
+      transitions: getKinglyTransitions({actionFactories, guards})
+    };
+    const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
+    const cases = inputSpace.map(scenario => {
+      return [
+        eventSpace[scenario[0]],
+        eventSpace[scenario[1]],
+        eventSpace[scenario[2]],
+      ]
+    })
+    const outputs1 = cases.map(scenario => {
+      const fsm1 = createStateMachine(fsmDef1, settings);
+      return scenario.map(fsm1)
+    });
+    const expected1 = [
+        // [event1, event1, event1]
+        [['B -> D'], ['D -> D'], null],
+        [['B -> D'], ['D -> D'], null],
+        [['B -> D'], ['D -> D'], ['Group1 -> Group1H', null]],
+        // [event1, event2, event1]
+        [['B -> D'], null, ['D -> D']],
+        [['B -> D'], null, null],
+        [['B -> D'], null, ['Group1 -> Group1H', null]],
+        // [event1, event3, event1]
+        [['B -> D'], ['Group1 -> Group1H', 'Group1 -> D'], ['D -> D']],
+        [['B -> D'], ['Group1 -> Group1H', null], null],
+        [['B -> D'],
+          ['Group1 -> Group1H', null],
+          ['Group1 -> Group1H', null]],
+        // [event2, event1, event1]
+        [['B -> C', 'C -> D'], null, null],
+        [['B -> C', 'C -> D'], null, null],
+        [['B -> C', 'C -> D'], null, ['Group1 -> Group1H', null
+        ]],
+        // [event2, event2, event1]
+        [['B -> C', 'C -> D'], null, null],
+        [['B -> C', 'C -> D'], null, null],
+        [['B -> C', 'C -> D'], null, ['Group1 -> Group1H', null
+        ]],
+        // [event2, event3, event1]
+        [['B -> C', 'C -> D'], ['Group1 -> Group1H', null], null],
+        [['B -> C', 'C -> D'], ['Group1 -> Group1H', null], null],
+        [['B -> C', 'C -> D'],
+          ['Group1 -> Group1H', null],
+          ['Group1 -> Group1H', null]],
+        // [event3, event1, event1]
+        [['Group1 -> Group1H', null], ['B -> D'], ['D -> D']
+        ],
+        [['Group1 -> Group1H', null], ['B -> D'], null],
+        [['Group1 -> Group1H', null],
+          ['B -> D'],
+          ['Group1 -> Group1H', null]],
+        // [event3, event2, event1]
+        [['Group1 -> Group1H', null], ['B -> C', 'C -> D'], null],
+        [['Group1 -> Group1H', null], ['B -> C', 'C -> D'], null],
+        [['Group1 -> Group1H', null],
+          ['B -> C', 'C -> D'],
+          ['Group1 -> Group1H', null]],
+        // [event3, event3, event1]
+        [['Group1 -> Group1H', null],
+          ['Group1 -> Group1H', null],
+          ['B -> D']],
+        [['Group1 -> Group1H', null],
+          ['Group1 -> Group1H', null],
+          ['B -> C', 'C -> D']],
+        [['Group1 -> Group1H', null],
+          ['Group1 -> Group1H', null],
+          ['Group1 -> Group1H', null]]
+    ];
+
+    it('runs the machine as per the graph', function () {
+      assert.deepEqual(errors, [], `graphml string is correctly parsed`);
+      assert.deepEqual(events, ["event3", "event2", "event1"], `The list of events is correctly parsed`);
+      assert.deepEqual(states, {
+        "n1ღE": "",
+        "n2ღ": {
+          "n2::n0ღB": "",
+          "n2::n1ღC": "",
+          "n2::n2ღ": {
+            "n2::n2::n0ღD": "",
+            "n2::n2::n2ღD": "",
+          },
+          "n2::n4ღH": "",
         }
       }, `The hierarchy of states is correctly parsed`);
       assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
