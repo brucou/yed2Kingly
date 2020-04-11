@@ -22,6 +22,8 @@ describe('Conversion yed to kingly', function () {
     const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
       computeTransitionsAndStatesFromXmlString(top_level_conditional_init);
     const guards = {
+      // we test on extended state, so we test also the guard parameters
+      // are as expected
       "not(isNumber)": (s, e, stg) => (typeof s.n !== 'number'),
       "isNumber": (s, e, stg) => (typeof s.n === 'number'),
     };
@@ -200,7 +202,7 @@ describe('Conversion yed to kingly', function () {
     });
   });
 
-  describe('no-hierarchy-events-eventless', function () {
+  describe('no_hierarchy_eventful_eventless_guards', function () {
     // tests with:
     // - condition1 fulfilled
     // - condition2 fulfilled
@@ -224,6 +226,8 @@ describe('Conversion yed to kingly', function () {
     ];
     const guards = {
       "shouldReturnToA": (s, e, stg) => s.shouldReturnToA,
+      // This time we test on event data, so we test also the guard parameters
+      // are as expected
       condition1: (s, e, stg) => e & 1,
       condition2: (s, e, stg) => e & 2,
       condition3: (s, e, stg) => e & 4,
@@ -376,6 +380,61 @@ describe('Conversion yed to kingly', function () {
         "n3ღTemp2": "",
         "n4ღDone": ""
       }, `The hierarchy of states is correctly parsed`);
+      assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
+      assert.deepEqual(outputs2, expected2, `Branch machine initialized with string ok`);
+    });
+  });
+
+  describe('top_level_conditional_init_with_hierarchy', function () {
+    // should be exact same tests than top_level_conditional_init
+    const { getKinglyTransitions, stateYed2KinglyMap, states, events, errors } =
+      computeTransitionsAndStatesFromXmlString(top_level_conditional_init_with_hierarchy);
+    const guards = {
+      // we test on extended state, so we test also the guard parameters
+      // are as expected
+      "not(isNumber)": (s, e, stg) => (typeof s.n !== 'number'),
+      "isNumber": (s, e, stg) => (typeof s.n === 'number'),
+    };
+    const actionFactories = {
+      logOther: (s, e, stg) => ({ outputs: `logOther run on ${s.n}`, updates: {} }),
+      logNumber: (s, e, stg) => ({ outputs: `logNumber run on ${s.n}`, updates: {} }),
+    };
+    const fsmDef1 = {
+      updateState,
+      initialExtendedState: { n: 0 },
+      events,
+      states,
+      transitions: getKinglyTransitions({ actionFactories, guards })
+    };
+    const fsm1 = createStateMachine(fsmDef1, settings);
+    const fsmDef2 = {
+      updateState,
+      initialExtendedState: { n: "" },
+      events,
+      states,
+      transitions: getKinglyTransitions({ actionFactories, guards })
+    };
+    const fsm2 = createStateMachine(fsmDef2, settings);
+
+    const outputs1 = [
+      { [events[0] + "X"]: void 0 },
+      { [events[0]]: void 0 },
+      { [events[0]]: void 0 }
+    ].map(fsm1);
+    const expected1 = [NO_OUTPUT, ["logNumber run on 0"], NO_OUTPUT];
+    const outputs2 = [{ [events[0] + "X"]: void 0 }, { [events[0]]: void 0 }, { [events[0]]: void 0 }].map(fsm2);
+    const expected2 = [NO_OUTPUT, ["logOther run on "], NO_OUTPUT];
+
+    it('runs the machine as per the graph', function () {
+      assert.deepEqual(errors, [], `graphml string is correctly parsed`);
+      assert.deepEqual(events, ['continue'], `events correctly parsed`);
+      assert.deepEqual(states, {
+        "n1ღ": {
+          "n1::n0ღNumber": "",
+          "n1::n2ღOther": "",
+          "n1::n3ღDone": "",
+        },
+      }, `state hierarchy correctly parsed`);
       assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
       assert.deepEqual(outputs2, expected2, `Branch machine initialized with string ok`);
     });
