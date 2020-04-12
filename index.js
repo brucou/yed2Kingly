@@ -265,3 +265,4 @@ module.exports = {
 // - log state list, eevent list, guard list, action list, so it can be copied into code
 // instead of typed by hand
 // actually could be directly: const guards = {} preformatted commented in the output js file!!
+// TODO: publish  new version of kingly

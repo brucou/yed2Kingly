@@ -999,36 +999,36 @@ describe('Conversion yed to kingly', function() {
       // [event1, event1, event1]
       [['B -> D'], ['D -> D'], null],
       [['B -> D'], ['D -> D'], null],
-      [['B -> D'], ['D -> D'], ['Group1 -> Group1H', null]],
+      [['B -> D'], ['D -> D'], ['Group1 -> Group1H', null, 'Group1 -> D']],
       // [event1, event2, event1]
       [['B -> D'], null, ['D -> D']],
       [['B -> D'], null, null],
-      [['B -> D'], null, ['Group1 -> Group1H', null]],
+      [['B -> D'], null, ['Group1 -> Group1H', null, 'Group1 -> D']],
       // [event1, event3, event1]
-      [['B -> D'], ['Group1 -> Group1H', 'Group1 -> D'], ['D -> D']],
-      [['B -> D'], ['Group1 -> Group1H', null], null],
-      [['B -> D'], ['Group1 -> Group1H', null], ['Group1 -> Group1H', null]],
-      // [event2, event1, event1]
+      [['B -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], null],
+      [['B -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], null],
+      [['B -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], ['Group1 -> Group1H', null, 'Group1 -> D']],
+      // // [event2, event1, event1]
       [['B -> C', 'C -> D'], null, null],
       [['B -> C', 'C -> D'], null, null],
-      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H', null]],
-      // [event2, event2, event1]
+      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H', null, 'Group1 -> D']],
+      // // [event2, event2, event1]
       [['B -> C', 'C -> D'], null, null],
       [['B -> C', 'C -> D'], null, null],
-      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H', null]],
-      // [event2, event3, event1]
-      [['B -> C', 'C -> D'], ['Group1 -> Group1H', null], null],
-      [['B -> C', 'C -> D'], ['Group1 -> Group1H', null], null],
-      [['B -> C', 'C -> D'], ['Group1 -> Group1H', null], ['Group1 -> Group1H', null]],
-      // [event3, event1, event1]
+      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H', null, 'Group1 -> D']],
+      // // [event2, event3, event1]
+      [['B -> C', 'C -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], null],
+      [['B -> C', 'C -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], null],
+      [['B -> C', 'C -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], ['Group1 -> Group1H', null, 'Group1 -> D']],
+      // // [event3, event1, event1]
       [['Group1 -> Group1H', null], ['B -> D'], ['D -> D']],
       [['Group1 -> Group1H', null], ['B -> D'], null],
-      [['Group1 -> Group1H', null], ['B -> D'], ['Group1 -> Group1H', null]],
-      // [event3, event2, event1]
+      [['Group1 -> Group1H', null], ['B -> D'], ['Group1 -> Group1H', null, 'Group1 -> D']],
+      // // [event3, event2, event1]
       [['Group1 -> Group1H', null], ['B -> C', 'C -> D'], null],
       [['Group1 -> Group1H', null], ['B -> C', 'C -> D'], null],
-      [['Group1 -> Group1H', null], ['B -> C', 'C -> D'], ['Group1 -> Group1H', null]],
-      // [event3, event3, event1]
+      [['Group1 -> Group1H', null], ['B -> C', 'C -> D'], ['Group1 -> Group1H', null, 'Group1 -> D']],
+      // // [event3, event3, event1]
       [['Group1 -> Group1H', null], ['Group1 -> Group1H', null], ['B -> D']],
       [['Group1 -> Group1H', null], ['Group1 -> Group1H', null], ['B -> C', 'C -> D']],
       [['Group1 -> Group1H', null], ['Group1 -> Group1H', null], ['Group1 -> Group1H', null]],
