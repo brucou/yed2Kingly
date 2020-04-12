@@ -1,13 +1,29 @@
-const {INIT_STATE, INIT_EVENT} = require('kingly')
+const {INIT_STATE, INIT_EVENT} = require('kingly');
 const {mapOverTree} = require('fp-rosetree');
-const {lensPath, view, mergeAll, concat, forEachObjIndexed} = require('ramda');
-const {handleAggregateEdgesPerFromEventKeyErrors, T, tryCatchFactory, Yed2KinglyConversionError, handleParseGraphMlStringErrors, isCompoundState, isInitialTransition, isSimplifiableSyntax, isTopLevelInitTransition, getYedParentNode, computeKinglyDestinationState, mapActionFactoryStrToActionFactoryFn, mapGuardStrToGuardFn, yedState2KinglyState, parseGraphMlString} = require('./helpers');
+const {lensPath, view, mergeAll, concat, forEachObjIndexed, find} = require('ramda');
+const {
+  handleAggregateEdgesPerFromEventKeyErrors,
+  T,
+  tryCatchFactory,
+  Yed2KinglyConversionError,
+  handleParseGraphMlStringErrors,
+  isCompoundState,
+  isInitialTransition,
+  isSimplifiableSyntax,
+  isTopLevelInitTransition,
+  getYedParentNode,
+  computeKinglyDestinationState,
+  mapActionFactoryStrToActionFactoryFn,
+  mapGuardStrToGuardFn,
+  yedState2KinglyState,
+  parseGraphMlString,
+} = require('./helpers');
 const {DEFAULT_ACTION_FACTORY_STR, STATE_LABEL_SEP, YED_ENTRY_STATE, YED_LABEL_DECODE_SEP} = require('./properties');
 
 // Lenses to access fields deep in xml json
 const edgeOriginStateLens = lensPath(['@_source']);
 const edgeTargetStateLens = lensPath(['@_target']);
-const edgeMlLabelLens = lensPath(['y:PolyLineEdge', 'y:EdgeLabel', '#text'])
+const edgeMlLabelLens = lensPath(['y:PolyLineEdge', 'y:EdgeLabel', '#text']);
 const atomicStateLens = lensPath(['y:ShapeNode', 'y:NodeLabel', '#text']);
 const compoundStateLens = lensPath(['y:ProxyAutoBoundsNode', 'y:Realizers', 'y:GroupNode', 'y:NodeLabel', '#text']);
 const getYedEdgeLabel = edgeML => {
@@ -17,38 +33,44 @@ const getYedEdgeLabel = edgeML => {
 };
 
 // Lenses for traversing the syntax tree
-const getLabel = graphObj => {
+// Note: that could be easier with a xpath query maybe?
+const getLabel = (graphObj) => {
   const graphData = graphObj.data;
-  const lens = isCompoundState(graphObj) ? compoundStateLens : atomicStateLens;
-  const dataKeys = Array.isArray(graphData)
-    ? graphData.reduce((acc, dataItem) => {
-      return Object.assign(acc, {[dataItem['@_key']]: view(lens, dataItem)})
-    }, {})
-    : graphData['@_key'] === 'd6'
-      ? {d6: view(lens, graphData)}
-      : {};
-  const stateLabel = dataKeys.d6 || "";
+  const yedNodeId = graphObj['@_id'];
+  const d6Key = Array.isArray(graphData)
+    ? find(keyRow => keyRow ['@_key'] === 'd6', graphData)
+    : graphData['@_key'] === 'd6' ? graphData : null
 
-  return [graphObj['@_id'], stateLabel]
+  if (typeof d6Key === 'undefined') return [yedNodeId, ""]
+
+  if (isCompoundState(graphObj)) {
+    const _groupNodes = view(lensPath(['y:ProxyAutoBoundsNode', 'y:Realizers', 'y:GroupNode']), d6Key);
+    const groupNodes = Array.isArray(_groupNodes ) ? _groupNodes : [_groupNodes];
+    const groupNode = find(row => {
+      return view(lensPath(['y:State', '@_closed']), row) === 'false'
+    },      groupNodes);
+    const groupName = view(lensPath(['y:NodeLabel', '#text']), groupNode);
+    return [yedNodeId, groupName]
+  }
+  else {
+    const atomicStateName = view(lensPath(['y:ShapeNode', 'y:NodeLabel', '#text']), graphData)
+    return [yedNodeId, atomicStateName]
+  }
 };
-const getChildren = graphObj => graphObj.graph ? graphObj.graph.node : [];
+const getChildren = graphObj => (graphObj.graph ? graphObj.graph.node : []);
 const constructStateHierarchy = (label, children) => {
   const [yedLabel, stateLabel] = label;
   const _label = label.join(STATE_LABEL_SEP);
 
   return stateLabel === YED_ENTRY_STATE
     ? {}
-    : children && children.length === 0
-      ? {[_label]: ""}
-      : {[_label]: mergeAll(children)}
+    : children && children.length === 0 ? {[_label]: ''} : {[_label]: mergeAll(children)};
 };
 const constructStateYed2KinglyMap = (label, children) => {
   const [yedLabel, stateLabel] = label;
-  const newMap = yedLabel === void 0
-    ? {}
-    : {[label[0]]: label[1]}
+  const newMap = yedLabel === void 0 ? {} : {[label[0]]: label[1]};
 
-  return mergeAll(concat(children, [newMap]))
+  return mergeAll(concat(children, [newMap]));
 };
 const stateHierarchyLens = {
   getLabel,
@@ -68,9 +90,7 @@ function aggregateEdgesPerFromEventKey({edges: hashMap, events}, yedEdge) {
   // Also: z is a string representing a function, but not a function
   const yedEdgeLabel = getYedEdgeLabel(yedEdge);
   const yedEdgeLabelRegExp = /\[(.*)\]/;
-  const expressionList = yedEdgeLabel
-    ? yedEdgeLabel.split(yedEdgeLabelRegExp)
-    : [`/${DEFAULT_ACTION_FACTORY_STR}`];
+  const expressionList = yedEdgeLabel ? yedEdgeLabel.split(yedEdgeLabelRegExp) : [`/${DEFAULT_ACTION_FACTORY_STR}`];
 
   // Possible cases:
   // x [y] / z: expressionList.length === 3
@@ -81,30 +101,24 @@ function aggregateEdgesPerFromEventKey({edges: hashMap, events}, yedEdge) {
   // x        : expressionList.length === 1
   // / z      : expressionList.length === 1
   // nil      : expressionList.length === 1
-  const actionFactory = (
-    expressionList.length === 3
-      ? expressionList[2] && expressionList[2].split('/')[1] || DEFAULT_ACTION_FACTORY_STR
+  const actionFactory = (expressionList.length === 3
+      ? (expressionList[2] && expressionList[2].split('/')[1]) || DEFAULT_ACTION_FACTORY_STR
       : expressionList[0].split('/')[1] || DEFAULT_ACTION_FACTORY_STR
   ).trim();
 
   // Reminder: eventless means !event is truthy so "" is ok
-  const event = (
-    expressionList.length === 3
-      ? expressionList[0] && expressionList[0].trim() || ""
-      : expressionList[0].split('/')[0] || ""
+  const event = (expressionList.length === 3
+      ? (expressionList[0] && expressionList[0].trim()) || ''
+      : expressionList[0].split('/')[0] || ''
   ).trim();
-  const guard = (
-    expressionList.length === 3
-      ? expressionList[1] && expressionList[1].trim() || ""
-      : ""
-  ).trim();
+  const guard = (expressionList.length === 3 ? (expressionList[1] && expressionList[1].trim()) || '' : '').trim();
   const fromEventKey = [from, event].join(YED_LABEL_DECODE_SEP);
 
   hashMap[fromEventKey] = hashMap[fromEventKey] || [];
   hashMap[fromEventKey] = hashMap[fromEventKey].concat([
-    {predicate: guard.trim(), to: to.trim(), actionFactory: actionFactory.trim()}
+    {predicate: guard.trim(), to: to.trim(), actionFactory: actionFactory.trim()},
   ]);
-  return {edges: hashMap, events: event ? events.add(event) : events}
+  return {edges: hashMap, events: event ? events.add(event) : events};
 }
 
 function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
@@ -127,12 +141,11 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
         if (isTopLevelInitTransition(yedFrom, userFrom)) {
           from = INIT_STATE;
           event = INIT_EVENT;
-        }
-        //   Case: non-top-level, i.e. compound state's init transition
-        // -> there is a parent to the origin node, that's the compound node we want
-        else {
-          const fromParent = getYedParentNode(yedFrom)
-          from = [fromParent, stateYed2KinglyMap[fromParent]].join(STATE_LABEL_SEP)
+        } else {
+          //   Case: non-top-level, i.e. compound state's init transition
+          // -> there is a parent to the origin node, that's the compound node we want
+          const fromParent = getYedParentNode(yedFrom);
+          from = [fromParent, stateYed2KinglyMap[fromParent]].join(STATE_LABEL_SEP);
           event = INIT_EVENT;
         }
       }
@@ -148,10 +161,9 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
           from,
           event,
           to: computeKinglyDestinationState(stateYed2KinglyMap, yedTo),
-          action: mapActionFactoryStrToActionFactoryFn(actionFactories, actionFactoryStr)
-        })
-      }
-      else {
+          action: mapActionFactoryStrToActionFactoryFn(actionFactories, actionFactoryStr),
+        });
+      } else {
         transitions.push({
           from,
           event,
@@ -160,15 +172,15 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
             return {
               predicate: mapGuardStrToGuardFn(guards, predicateStr),
               to: computeKinglyDestinationState(stateYed2KinglyMap, yedTo),
-              action: mapActionFactoryStrToActionFactoryFn(actionFactories, actionFactoryStr)
-            }
-          })
-        })
+              action: mapActionFactoryStrToActionFactoryFn(actionFactories, actionFactoryStr),
+            };
+          }),
+        });
       }
     }, edges);
 
-    return transitions
-  }
+    return transitions;
+  };
 }
 
 // TODO: apparently empty actions are set undefined instead of action_identity!!
@@ -200,8 +212,9 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   //   - yed: node with label YED_ENTRY_STATE
   // - history pseudo-states
   //   - yed: node with label YED_SHALLOW_HISTORY_STATE or YED_DEEP_HISTORY_STATE
-  const {graphml: graphObj} = tryCatch(parseGraphMlString, handleParseGraphMlStringErrors)(yedString)
+  const {graphml: graphObj} = tryCatch(parseGraphMlString, handleParseGraphMlStringErrors)(yedString);
   if (_errors.length > 0) throw new Yed2KinglyConversionError(_errors);
+  console.log(`graphObj.graph.node`, graphObj.graph.node[1].data[1])
 
   const stateHierarchy = mapOverTree(stateHierarchyLens, x => x, graphObj)[STATE_LABEL_SEP];
   const stateYed2KinglyMap = mapOverTree(stateYed2KinglyLens, x => x, graphObj);
@@ -229,13 +242,13 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
     stateYed2KinglyMap,
     events: Array.from(events),
     getKinglyTransitions,
-    errors: _errors
-  }
+    errors: _errors,
+  };
 }
 
 module.exports = {
-  computeTransitionsAndStatesFromXmlString
-}
+  computeTransitionsAndStatesFromXmlString,
+};
 
 // TODO left:
 // - read parameters
