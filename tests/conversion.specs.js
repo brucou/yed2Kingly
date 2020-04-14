@@ -565,7 +565,7 @@ describe('Conversion yed to kingly', function () {
         "another only guard": "-another only guard"
 
       };
-      const formattedTransitions = getKinglyTransitions({ actionFactories, guards })
+      const formattedTransitions = getKinglyTransitions({ actionFactories, guards }).transitions
         .map(formatResult);
 
       assert.deepEqual(formattedTransitions, [

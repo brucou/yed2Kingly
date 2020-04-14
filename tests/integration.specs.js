@@ -53,7 +53,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: { n: 0 },
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const fsm1 = createStateMachine(fsmDef1, settings);
     const fsmDef2 = {
@@ -61,7 +61,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: { n: '' },
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const fsm2 = createStateMachine(fsmDef2, settings);
 
@@ -102,7 +102,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: { shouldReturnToA: false },
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
     const cases = inputSpace.map(scenario => {
@@ -156,7 +156,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: { shouldReturnToA: true },
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const fsm2 = createStateMachine(fsmDef2, settings);
     const outputs2 = cases.map(scenario => {
@@ -262,7 +262,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: { shouldReturnToA: false },
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const inputSpace = cartesian([0, 1, 2, 3, 4, 5], [0, 1, 2, 3, 4, 5]);
     const cases = inputSpace.map(scenario => {
@@ -327,7 +327,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: { shouldReturnToA: true },
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const fsm2 = createStateMachine(fsmDef2, settings);
     const outputs2 = cases.map(scenario => {
@@ -426,7 +426,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: { n: 0 },
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const fsm1 = createStateMachine(fsmDef1, settings);
     const fsmDef2 = {
@@ -434,7 +434,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: { n: '' },
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions
     };
     const fsm2 = createStateMachine(fsmDef2, settings);
 
@@ -489,7 +489,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: void 0,
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const fsm1 = createStateMachine(fsmDef1, settings1);
     const outputs1 = [unknownEvent, { event1: void 0 }].map(fsm1);
@@ -500,7 +500,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: void 0,
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions
     };
     const fsm2 = createStateMachine(fsmDef2, settings2);
     const outputs2 = [unknownEvent, { event1: void 0 }].map(fsm2);
@@ -558,7 +558,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: void 0,
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const outputs1 = [
       { event1: { n: 0 } },
@@ -698,7 +698,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: {},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
     const cases = inputSpace.map(scenario => {
@@ -792,7 +792,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: {},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
     const cases = inputSpace.map(scenario => {
@@ -885,7 +885,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: {},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions
     };
     const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
     const cases = inputSpace.map(scenario => {
@@ -985,7 +985,7 @@ describe('Conversion yed to kingly', function() {
       initialExtendedState: {},
       events,
       states,
-      transitions: getKinglyTransitions({ actionFactories, guards }),
+      transitions: getKinglyTransitions({ actionFactories, guards }).transitions,
     };
     const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
     const cases = inputSpace.map(scenario => {

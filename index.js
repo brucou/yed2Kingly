@@ -121,10 +121,45 @@ function aggregateEdgesPerFromEventKey({edges: hashMap, events}, yedEdge) {
   return {edges: hashMap, events: event ? events.add(event) : events};
 }
 
+/**
+ * @modifies {errors}
+ * @param {Array} errors
+ * @param actionFactories
+ * @param guards
+ * @param edges
+ * @returns {Array} Array contains found errors, empty is no error found
+ */
+function checkForMissingFunctions(errors, {actionFactories, guards}, edges){
+  forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
+    arrGuardsTargetActions.every(guardsTargetActionRecord => {
+      const {predicate: _predicateStr, to: yedTo, actionFactory: _actionFactoryStr} = guardsTargetActionRecord;
+      const predicateStr = _predicateStr.trim();
+      const actionFactoryStr = _actionFactoryStr.trim();
+      // We do not check that it is a function here to allow a string for testing purposes
+      const isGuardPassed = !predicateStr || guards && guards[predicateStr];
+      const isActionPassed = !actionFactoryStr || actionFactories[actionFactoryStr];
+
+      if (!isGuardPassed) errors.push({
+        message: `getKinglyTransitions > Yed graph file mentions a guard named |${predicateStr}|. I could not find the implementation of that guard in the parameter |guards| passed!`,
+        info: {guards}
+      })
+      if (!isActionPassed) errors.push({
+        message: `getKinglyTransitions > Yed graph file mentions an action factory named |${actionFactoryStr}|. I could not find the implementation of that action factory in the parameter |actionFactories| passed!`,
+        info: {actionFactories}
+      })
+    });
+  }, edges);
+
+  return errors
+}
+
 function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
   // Transitions are computed by means of a function in which the mapping between actions and guards
   // strings and the respective JavaScript functions is injected
   return function getKinglyTransitions({actionFactories, guards}) {
+    let errors = [];
+    errors = checkForMissingFunctions(errors, {actionFactories, guards}, edges);
+
     let transitions = [];
     forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
       // Example:
@@ -150,10 +185,6 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
         }
       }
 
-      // TODO: some error control here to add
-      // - actionStr cannot be found in actionFactories
-      // - same for guards
-      // - no spacing in actions...
       if (isSimplifiableSyntax(arrGuardsTargetActions)) {
         const {to: yedTo, actionFactory: actionFactoryStr} = arrGuardsTargetActions[0];
 
@@ -167,8 +198,8 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
         transitions.push({
           from,
           event,
-          guards: arrGuardsTargetActions.map(arrGuardsTargetAction => {
-            const {predicate: predicateStr, to: yedTo, actionFactory: actionFactoryStr} = arrGuardsTargetAction;
+          guards: arrGuardsTargetActions.map(guardsTargetActionRecord => {
+            const {predicate: predicateStr, to: yedTo, actionFactory: actionFactoryStr} = guardsTargetActionRecord;
             return {
               predicate: mapGuardStrToGuardFn(guards, predicateStr),
               to: computeKinglyDestinationState(stateYed2KinglyMap, yedTo),
@@ -179,12 +210,10 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges) {
       }
     }, edges);
 
-    return transitions;
+    return {errors, transitions};
   };
 }
 
-// TODO: apparently empty actions are set undefined instead of action_identity!!
-// occurs likely when there is nothing on the edge label and not init transition edge
 // TODO: checking
 // - check directly the generated states and transitions with Kingly but now! ABSOLUTELY DO IT
 // - but maybe also check basic stuff about states (not empty), node labels (only one [] etc)
@@ -261,8 +290,7 @@ module.exports = {
 // - write a file
 //   - probably PUG or liquid or ejs whatever template possible
 //   - remember export transitions is a function, states too
-// TODO: imrpvoe
+// TODO: improve
 // - log state list, eevent list, guard list, action list, so it can be copied into code
 // instead of typed by hand
 // actually could be directly: const guards = {} preformatted commented in the output js file!!
-// TODO: publish  new version of kingly
