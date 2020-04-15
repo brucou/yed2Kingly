@@ -4,7 +4,7 @@
 const { INIT_EVENT, INIT_STATE, NO_OUTPUT, createStateMachine } = require('kingly');
 const assert = require('assert');
 const graphs = require('./graphs.fixtures');
-const { computeTransitionsAndStatesFromXmlString } = require('../index');
+const { computeTransitionsAndStatesFromXmlString } = require('../conversion');
 const { formatResult, cartesian } = require('../helpers');
 // Use a simple merge to update extended state, that's enough for tests
 // but then updates must be an object, not an array
@@ -1057,15 +1057,3 @@ describe('Conversion yed to kingly', function() {
     });
   });
 });
-
-// TODO: get a real example (can be complex, that's the point,
-// but lot of problems with syntax - I must implement the functions, so names should not have space, could take
-// one from Kingly test? I need a machine with H* !! take the chess example rewritten? yeah that could be useful
-// for tutorial however reusing stupid machine from Kingly let test more conditions so do both
-
-// TODO: think about start... if not using initial control state then I need a start event (use init_event??)
-// TODO: rule to add: guards are OK in init transition but no eventless after...
-// that is a bit complicated to memorize so maybe just forbid it entirely: no guards in initial transition
-// NO, just impose an initial control state and rewrite the tests accordingly, anyways
-// I am rewriting them here, That means no guards, no nothing on init in yed, and no actions on the initial ctransition
-// path. Should check that too in kingly library...

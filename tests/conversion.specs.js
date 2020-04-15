@@ -1,7 +1,7 @@
 const { INIT_EVENT, INIT_STATE } = require('kingly');
 const assert = require('assert');
 const { formatResult} = require('../helpers');
-const { computeTransitionsAndStatesFromXmlString } = require('../index');
+const { computeTransitionsAndStatesFromXmlString } = require('../conversion');
 
 // cf. tests/graphs/test-yed-conversion.graphml
 const yedString = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>

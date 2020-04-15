@@ -136,6 +136,10 @@ function mapGuardStrToGuardFn(guards, predicateStr) {
   return guards[predicateStr] || T
 }
 
+function markFunctionStr(_, str){
+  return ["", "", "", str, "", "", ""].join(STATE_LABEL_SEP)
+}
+
 // Parsing
 function parseGraphMlString(yedString) {
   // true as third param validates the xml string prior to parsing, possibly throws
@@ -226,4 +230,5 @@ module.exports = {
   parseGraphMlString,
   formatResult,
   cartesian,
+  markFunctionStr,
 }
