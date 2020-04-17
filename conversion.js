@@ -18,6 +18,7 @@ const {
   yedState2KinglyState,
   parseGraphMlString,
   markFunctionStr,
+  markFunctionNoop,
 } = require('./helpers');
 const {DEFAULT_ACTION_FACTORY_STR, STATE_LABEL_SEP, YED_ENTRY_STATE, YED_LABEL_DECODE_SEP} = require('./properties');
 
@@ -77,12 +78,15 @@ const stateYed2KinglyLens = {
   constructTree: constructStateYed2KinglyMap,
 };
 
-function aggregateEdgesPerFromEventKey({edges: hashMap, events}, yedEdge) {
-  const from = view(lensPath(['@_source']), yedEdge).trim();
-  const to = view(lensPath(['@_target']), yedEdge).trim();
+// TODO: implement rules
+// yEd action cannot be named ACTION_IDENTITY
+// no event, guards or action contains the character STATE_LABEL_SEP
+// Only ever one [x]
+// Only ever one /
+// Never ever the SEP (heart symbol)
+function parseYedLabel(yedEdgeLabel) {
   // Label as in yEd i.e. `x [y] / z` string, with x, y, z all optionals
   // Also: z is a string representing a function, but not a function
-  const yedEdgeLabel = getYedEdgeLabel(yedEdge);
   const yedEdgeLabelRegExp = /\[(.*)\]/;
   const expressionList = yedEdgeLabel ? yedEdgeLabel.split(yedEdgeLabelRegExp) : [`/${DEFAULT_ACTION_FACTORY_STR}`];
 
@@ -106,12 +110,22 @@ function aggregateEdgesPerFromEventKey({edges: hashMap, events}, yedEdge) {
       : expressionList[0].split('/')[0] || ''
   ).trim();
   const guard = (expressionList.length === 3 ? (expressionList[1] && expressionList[1].trim()) || '' : '').trim();
+
+  return {actionFactory, event, guard}
+}
+
+function aggregateEdgesPerFromEventKey({edges: hashMap, events}, yedEdge) {
+  const from = view(lensPath(['@_source']), yedEdge).trim();
+  const to = view(lensPath(['@_target']), yedEdge).trim();
+  const yedEdgeLabel = getYedEdgeLabel(yedEdge);
+  const {actionFactory, event, guard} = parseYedLabel(yedEdgeLabel);
   const fromEventKey = [from, event].join(YED_LABEL_DECODE_SEP);
 
   hashMap[fromEventKey] = hashMap[fromEventKey] || [];
   hashMap[fromEventKey] = hashMap[fromEventKey].concat([
     {predicate: guard.trim(), to: to.trim(), actionFactory: actionFactory.trim()},
   ]);
+
   return {edges: hashMap, events: event ? events.add(event) : events};
 }
 
@@ -177,18 +191,18 @@ function checkForMissingFunctions(errors, {actionFactories, guards}, edges) {
 }
 
 function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges, injected) {
-  const mapActionFactoryStrToActionFactoryFn = injected && injected.mapActionFactoryStrToActionFactoryFn || defaultMapActionFactoryStrToActionFactoryFn;
-  const mapGuardStrToGuardFn = injected && injected.mapGuardStrToGuardFn || defaultMapGuardStrToGuardFn;
+  const mapActionFactoryStrToActionFactoryFn =
+    injected && injected.mapActionFactoryStrToActionFactoryFn
+    || defaultMapActionFactoryStrToActionFactoryFn;
+  const mapGuardStrToGuardFn =
+    injected && injected.mapGuardStrToGuardFn
+    || defaultMapGuardStrToGuardFn;
 
   // Transitions are computed by means of a function in which the mapping between actions and guards
   // strings and the respective JavaScript functions is injected
   return function getKinglyTransitions({actionFactories, guards}) {
     let errors = [];
-    // TODO: do that check not here but in the written file and on the transitions objects
-    // so I don't need to include edges in the written file
     errors = checkForMissingFunctions(errors, {actionFactories, guards}, edges);
-    // TODO: then compute transitions without guards and actionFactories, then
-    // return the function with it
 
     let transitions = [];
     forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
@@ -202,6 +216,7 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges, injected) {
 
       // Case: init transition
       if (isInitialTransition(yedFrom, userFrom)) {
+        // TODO: rule <- No event allowed on initial states
         //   Case: top-level init transition
         if (isTopLevelInitTransition(yedFrom, userFrom)) {
           from = INIT_STATE;
@@ -230,6 +245,7 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges, injected) {
           event,
           guards: arrGuardsTargetActions.map(guardsTargetActionRecord => {
             const {predicate: predicateStr, to: yedTo, actionFactory: actionFactoryStr} = guardsTargetActionRecord;
+
             return {
               predicate: mapGuardStrToGuardFn(guards, predicateStr),
               to: computeKinglyDestinationState(stateYed2KinglyMap, yedTo),
@@ -244,16 +260,6 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges, injected) {
   };
 }
 
-// TODO: checking
-// - check directly the generated states and transitions with Kingly but now! ABSOLUTELY DO IT
-// - but maybe also check basic stuff about states (not empty), node labels (only one [] etc)
-// Only ever one [x]
-// Only ever one /
-// Never ever the SEP (heart symbol)
-// yEd action cannot be named ACTION_IDENTITY and no such entry in actionFactories prop
-// No event allowed on initial states (top-level or else)
-// - any yed of the multiple graph types seem to all be graph, with only visuals changing
-//   so this algorithm should be fine even with swimlanes and fancy stuff
 function computeTransitionsAndStatesFromXmlString(yedString) {
   // Building the error accumulation capability
   // Could thread this with applicative functors but keeping it simple and plain
@@ -292,16 +298,22 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   if (_errors.length > 0) throw new Yed2KinglyConversionError(_errors);
 
   // Previously computed edges is traversed and converted into Kingly transitions
+  // 1. transitions with guards and actions assigned to their identifier
   const transitionsWithoutGuardsActions = computeKinglyTransitionsFactory(
     stateYed2KinglyMap,
     edges,
     {mapActionFactoryStrToActionFactoryFn: markFunctionStr, mapGuardStrToGuardFn: markFunctionStr}
   )({actionFactories: {}, guards: {}}).transitions;
-  console.log(`transitionsWithoutGuardsActions`, transitionsWithoutGuardsActions);
-  const getKinglyTransitions = computeKinglyTransitionsFactory(
+
+  // 2. transitions with guards and actions assigned to a noop function
+  const transitionsWithFakeGuardsActions = computeKinglyTransitionsFactory(
     stateYed2KinglyMap,
-    edges
-  );
+    edges,
+    {mapActionFactoryStrToActionFactoryFn: markFunctionNoop, mapGuardStrToGuardFn: markFunctionNoop}
+  )({actionFactories: {}, guards: {}}).transitions;
+
+  // 3. Factory to get the real transitions from the real actions and guards
+  const getKinglyTransitions = computeKinglyTransitionsFactory(stateYed2KinglyMap, edges);
 
   return {
     states: stateHierarchy,
@@ -309,6 +321,7 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
     edges,
     events: Array.from(events),
     transitionsWithoutGuardsActions,
+    transitionsWithFakeGuardsActions,
     getKinglyTransitions,
     computeKinglyTransitionsFactory,
     errors: _errors,
@@ -318,5 +331,3 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
 module.exports = {
   computeTransitionsAndStatesFromXmlString,
 };
-
-// TODO: check that no event, guards or action contains the character STATE_LABEL_SEP

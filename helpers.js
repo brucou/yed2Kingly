@@ -1,6 +1,6 @@
 const parser = require('fast-xml-parser');
 const {YED_DEEP_HISTORY_STATE, YED_SHALLOW_HISTORY_STATE, YED_ENTRY_STATE, STATE_LABEL_SEP, DEFAULT_ACTION_FACTORY_STR,DEFAULT_ACTION_FACTORY} = require('./properties');
-const {historyState, SHALLOW, DEEP} = require("kingly");
+const {historyState, SHALLOW, DEEP, fsmContracts, createStateMachine} = require("kingly");
 const { mapOverObj } = require('fp-rosetree');
 
 function T() { return true}
@@ -140,6 +140,15 @@ function markFunctionStr(_, str){
   return ["", "", "", str, "", "", ""].join(STATE_LABEL_SEP)
 }
 
+function markFunctionNoop(_, str){
+  return () => ({outputs: [], updates: []})
+}
+
+function contains(as, bs){
+  // returns true if every a in as can be found in bs
+  return as.every(a => bs.indexOf(a) > -1)
+}
+
 // Parsing
 function parseGraphMlString(yedString) {
   // true as third param validates the xml string prior to parsing, possibly throws
@@ -190,6 +199,31 @@ function formatResult(result) {
   }
 }
 
+const fakeConsole = {
+  log: () => {},
+  error: () => {},
+  warn: () => {},
+  info: () => {},
+  debug: () => {},
+};
+
+function checkKinglyContracts(states, events, transitions) {
+  try {
+    return createStateMachine({
+      initialExtendedState: void 0,
+      events,
+      states,
+      transitions,
+      updateState: () => {
+      },
+    }, {debug: {console: fakeConsole, checkContracts: fsmContracts}});
+  }
+  catch (err) {
+    console.error(err)
+    return null
+  }
+}
+
 // https://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
 // let output = cartesian([1,2],[10,20],[100,200,300]);
 // This is the output of that command:
@@ -231,4 +265,7 @@ module.exports = {
   formatResult,
   cartesian,
   markFunctionStr,
+  markFunctionNoop,
+  checkKinglyContracts,
+  contains,
 }
