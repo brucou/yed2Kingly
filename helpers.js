@@ -144,6 +144,10 @@ function markFunctionNoop(_, str){
   return () => ({outputs: [], updates: []})
 }
 
+function markGuardNoop(_, str){
+  return () => true
+}
+
 function contains(as, bs){
   // returns true if every a in as can be found in bs
   return as.every(a => bs.indexOf(a) > -1)
@@ -266,6 +270,8 @@ module.exports = {
   cartesian,
   markFunctionStr,
   markFunctionNoop,
+  markGuardNoop,
   checkKinglyContracts,
+  fakeConsole,
   contains,
 }

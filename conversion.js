@@ -19,6 +19,7 @@ const {
   parseGraphMlString,
   markFunctionStr,
   markFunctionNoop,
+  markGuardNoop,
 } = require('./helpers');
 const {DEFAULT_ACTION_FACTORY_STR, STATE_LABEL_SEP, YED_ENTRY_STATE, YED_LABEL_DECODE_SEP} = require('./properties');
 
@@ -56,10 +57,16 @@ const getChildren = graphObj => (graphObj.graph ? graphObj.graph.node : []);
 const constructStateHierarchy = (label, children) => {
   const [yedLabel, stateLabel] = label;
   const _label = label.join(STATE_LABEL_SEP);
+  const isAtomicState = children => children && children.length === 0;
+  const isHistoryState = stateLabel => (stateLabel === "H" || stateLabel === "H*");
 
   return stateLabel === YED_ENTRY_STATE
     ? {}
-    : children && children.length === 0 ? {[_label]: ''} : {[_label]: mergeAll(children)};
+    : isAtomicState(children)
+      ? isHistoryState(stateLabel)
+        ? {}
+        : {[_label]: ''}
+      : {[_label]: mergeAll(children)};
 };
 const constructStateYed2KinglyMap = (label, children) => {
   const [yedLabel, stateLabel] = label;
@@ -198,8 +205,9 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges, injected) {
     injected && injected.mapGuardStrToGuardFn
     || defaultMapGuardStrToGuardFn;
 
-  // Transitions are computed by means of a function in which the mapping between actions and guards
-  // strings and the respective JavaScript functions is injected
+  // Transitions are computed by means of a function in which the mapping
+  // between actions and guards strings and the respective JavaScript functions
+  // is injected
   return function getKinglyTransitions({actionFactories, guards}) {
     let errors = [];
     errors = checkForMissingFunctions(errors, {actionFactories, guards}, edges);
@@ -244,7 +252,8 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges, injected) {
           from,
           event,
           guards: arrGuardsTargetActions.map(guardsTargetActionRecord => {
-            const {predicate: predicateStr, to: yedTo, actionFactory: actionFactoryStr} = guardsTargetActionRecord;
+            const {predicate: predicateStr, to: yedTo, actionFactory: actionFactoryStr}
+              = guardsTargetActionRecord;
 
             return {
               predicate: mapGuardStrToGuardFn(guards, predicateStr),
@@ -280,6 +289,7 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   const {graphml: graphObj} = tryCatch(parseGraphMlString, handleParseGraphMlStringErrors)(yedString);
   if (_errors.length > 0) throw new Yed2KinglyConversionError(_errors);
 
+  // TODO: remove the history states from the hierarchy
   const stateHierarchy = mapOverTree(stateHierarchyLens, x => x, graphObj)[STATE_LABEL_SEP];
   const stateYed2KinglyMap = mapOverTree(stateYed2KinglyLens, x => x, graphObj);
   const yedEdges = graphObj.graph.edge;
@@ -309,7 +319,7 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   const transitionsWithFakeGuardsActions = computeKinglyTransitionsFactory(
     stateYed2KinglyMap,
     edges,
-    {mapActionFactoryStrToActionFactoryFn: markFunctionNoop, mapGuardStrToGuardFn: markFunctionNoop}
+    {mapActionFactoryStrToActionFactoryFn: markFunctionNoop, mapGuardStrToGuardFn: markGuardNoop}
   )({actionFactories: {}, guards: {}}).transitions;
 
   // 3. Factory to get the real transitions from the real actions and guards

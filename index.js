@@ -54,8 +54,8 @@ function convertYedFile(_file) {
 
       // Stringify the transitions without guards and actions (we just have the names of such)
       // to hold the guards and actions
-      let predicateList = [];
-      let actionList = [];
+      let predicateList = new Set();
+      let actionList = new Set();
       const transitionsStr = transitionsWithoutGuardsActions.map(transitionRecord => {
         if (transitionRecord.guards) {
           const {from, event, guards} = transitionRecord;
@@ -65,8 +65,9 @@ function convertYedFile(_file) {
             const {predicate, to, action} = guardRecord;
             const predicateStr = predicate.slice(3, -3);
             const actionStr = action.slice(3, -3);
-            predicateList.push(predicateStr);
-            actionList.push(actionStr);
+            predicateList.add(predicateStr);
+            actionList.add(actionStr);
+            // actionList.push(actionStr);
 
             return `
           {predicate: guards["${predicateStr}"], to: "${to}", action: aF["${actionStr}"]}, 
@@ -79,6 +80,7 @@ function convertYedFile(_file) {
         else {
           const {from, event, to, action} = transitionRecord;
           const actionStr = action.slice(3, -3);
+          actionList.add(actionStr);
 
           return `
           { from: "${from}", event: "${event}", to: "${to}", action: aF["${actionStr}"] } 
@@ -96,15 +98,14 @@ function convertYedFile(_file) {
       // However, you will have to find a valid JavaScript name for the matching function
       // -----Guards------
       // const guards = {
-         ${predicateList.map(pred => `//   "${pred}": function (){},`).join('\n')}
+         ${Array.from(predicateList).map(pred => `//   "${pred}": function (){},`).join('\n')}
       // };
       // -----Actions------
       // const actions = {
-         ${actionList.map(action => `//   "${action}": function (){},`).join('\n')}
+         ${Array.from(actionList).map(action => `//   "${action}": function (){},`).join('\n')}
       // };
       // ----------------
          function contains(as, bs){
-           // returns true if every a in as can be found in bs
            return as.every(function(a){return bs.indexOf(a) > -1} )
          }
          var NO_OUTPUT = ${JSON.stringify(NO_OUTPUT)};
@@ -114,17 +115,15 @@ function convertYedFile(_file) {
          function getKinglyTransitions (record){
          var aF = record.actionFactories;
          var guards = record.guards
-         var actionList = ${JSON.stringify(actionList)};
-         var predicateList = ${JSON.stringify(predicateList)};
+         var actionList = ${JSON.stringify(Array.from(actionList))};
+         var predicateList = ${JSON.stringify(Array.from(predicateList))};
          aF['ACTION_IDENTITY'] = ${ACTION_IDENTITY}; 
-          // We require the actionFactories objects to have EXACTLY the required actions
-          // We could test just an inclusion but we are lazy and better to start strict and relax later
-           if (contains(actionList, Object.keys(aF))) {
-             console.error({actionFactories: aF, actionList});
+           if (!contains(actionList, Object.keys(aF))) {
+             console.error({actionFactories: Object.keys(aF), actionList});
              throw new Error("Some action are missing either in the graph, or in the action implementation object!")
            }
-           if (contains(predicateList, Object.keys(guards))) {
-             console.error({guards, predicateList});
+           if (!contains(predicateList, Object.keys(guards))) {
+             console.error({guards: Object.keys(guards), predicateList});
              throw new Error("Some guards are missing either in the graph, or in the guard implementation object!")
            }
            const transitions = [
@@ -133,8 +132,9 @@ function convertYedFile(_file) {
            
            return transitions
          }
-         
-         
+         `.trim();
+
+      const esmExports = `
          export {
            events,
            states,
@@ -142,20 +142,42 @@ function convertYedFile(_file) {
          }
 `.trim();
 
-      // Write the output file
-      //
+      const cjsExports = `
+         module.exports = {
+           events,
+           states,
+           getKinglyTransitions
+         }
+`.trim();
+
+      // Write the esm output file
+      const esmContents = [fileContents, esmExports].join("\n\n");
       try {
-        const prettyFileContents = prettier.format(fileContents, {semi: true, parser: "babel", printWidth: 120});
+        const prettyFileContents = prettier.format(esmContents, {semi: true, parser: "babel", printWidth: 120});
         fs.writeFileSync(`${file}.fsm.js`, prettyFileContents)
         //file written successfully
       } catch (err) {
+        console.error(`error writing converted esm file.`);
         console.error(err);
         process.exit(1);
       }
+
+      // Write the cjs output filee
+      const cjsContents = [fileContents, cjsExports].join("\n\n");
+      try {
+        const prettyFileContents = prettier.format(cjsContents , {semi: true, parser: "babel", printWidth: 120});
+        fs.writeFileSync(`${file}.fsm.cjs`, prettyFileContents)
+        //file written successfully
+      } catch (err) {
+        console.error(`Error writing converted esm file.`);
+        console.error(err);
+        process.exit(1);
+      }
+
     }
   } catch (err) {
     // The actual message must have already be logged in the console
-    console.error(`Exiting due to errors`);
+    console.error(`Exiting due to errors`, err);
     process.exit(1);
   }
 }
@@ -180,7 +202,7 @@ function convertYedFile(_file) {
 // Top Init transition (in yed) cannot have actions or event but can have guards (rule comes from Kingly)
 // no ACTION_IDENTITY entry in actionFactories prop (not worth throwing an exception)
 
-// TODO: see how to santize guard and action names:
+// TODO: see how to sanitize guard and action names:
 // function sanitize(string) {
 //   const map = {
 //     ' ': '_',
