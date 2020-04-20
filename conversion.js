@@ -21,7 +21,7 @@ const {
   markFunctionNoop,
   markGuardNoop,
 } = require('./helpers');
-const {DEFAULT_ACTION_FACTORY_STR, STATE_LABEL_SEP, YED_ENTRY_STATE, YED_LABEL_DECODE_SEP} = require('./properties');
+const {DEFAULT_ACTION_FACTORY_STR, SEP, YED_ENTRY_STATE} = require('./properties');
 
 // Lenses for traversing the syntax tree
 // Note: that could be easier with a xpath query maybe?
@@ -56,7 +56,7 @@ const getLabel = (graphObj) => {
 const getChildren = graphObj => (graphObj.graph ? graphObj.graph.node : []);
 const constructStateHierarchy = (label, children) => {
   const [yedLabel, stateLabel] = label;
-  const _label = label.join(STATE_LABEL_SEP);
+  const _label = label.join(SEP);
   const isAtomicState = children => children && children.length === 0;
   const isHistoryState = stateLabel => (stateLabel === "H" || stateLabel === "H*");
 
@@ -85,17 +85,17 @@ const stateYed2KinglyLens = {
   constructTree: constructStateYed2KinglyMap,
 };
 
-// TODO: implement rules
-// yEd action cannot be named ACTION_IDENTITY
-// no event, guards or action contains the character STATE_LABEL_SEP
+// NTH: implement rules
 // Only ever one [x]
-// Only ever one /
-// Never ever the SEP (heart symbol)
 function parseYedLabel(yedEdgeLabel) {
+  if (yedEdgeLabel && yedEdgeLabel.split('/').length > 2){
+    throw `parseYedLabel > You used ${yedEdgeLabel} as edge label. There can only be one / to avoid misunderstandings.`
+  }
+
   // Label as in yEd i.e. `x [y] / z` string, with x, y, z all optionals
   // Also: z is a string representing a function, but not a function
   const yedEdgeLabelRegExp = /\[(.*)\]/;
-  const expressionList = yedEdgeLabel ? yedEdgeLabel.split(yedEdgeLabelRegExp) : [`/${DEFAULT_ACTION_FACTORY_STR}`];
+  const expressionList = yedEdgeLabel ? yedEdgeLabel.split(yedEdgeLabelRegExp) : [` / `];
 
   // Possible cases:
   // x [y] / z: expressionList.length === 3
@@ -106,10 +106,14 @@ function parseYedLabel(yedEdgeLabel) {
   // x        : expressionList.length === 1
   // / z      : expressionList.length === 1
   // nil      : expressionList.length === 1
-  const actionFactory = (expressionList.length === 3
-      ? (expressionList[2] && expressionList[2].split('/')[1]) || DEFAULT_ACTION_FACTORY_STR
-      : expressionList[0].split('/')[1] || DEFAULT_ACTION_FACTORY_STR
+  const _actionFactory = (expressionList.length === 3
+      ? (expressionList[2] && expressionList[2].split('/')[1])|| ""
+      : expressionList[0].split('/')[1] || ""
   ).trim();
+  if (_actionFactory === DEFAULT_ACTION_FACTORY_STR) {
+    throw `parseYedLabel > You cannot use ${DEFAULT_ACTION_FACTORY_STR} as action!`
+  }
+  const actionFactory = _actionFactory || DEFAULT_ACTION_FACTORY_STR;
 
   // Reminder: eventless means !event is truthy so "" is ok
   const event = (expressionList.length === 3
@@ -118,6 +122,9 @@ function parseYedLabel(yedEdgeLabel) {
   ).trim();
   const guard = (expressionList.length === 3 ? (expressionList[1] && expressionList[1].trim()) || '' : '').trim();
 
+  if ([actionFactory, event, guard].some(str => str.includes(SEP))){
+    throw `parseYedLabel > You used ${yedEdgeLabel} as edge label. You cannot use the character ${SEP} in a label!`
+  }
   return {actionFactory, event, guard}
 }
 
@@ -126,7 +133,7 @@ function aggregateEdgesPerFromEventKey({edges: hashMap, events}, yedEdge) {
   const to = view(lensPath(['@_target']), yedEdge).trim();
   const yedEdgeLabel = getYedEdgeLabel(yedEdge);
   const {actionFactory, event, guard} = parseYedLabel(yedEdgeLabel);
-  const fromEventKey = [from, event].join(YED_LABEL_DECODE_SEP);
+  const fromEventKey = [from, event].join(SEP);
 
   hashMap[fromEventKey] = hashMap[fromEventKey] || [];
   hashMap[fromEventKey] = hashMap[fromEventKey].concat([
@@ -146,7 +153,7 @@ function aggregateEdgesPerFromEventKey({edges: hashMap, events}, yedEdge) {
  */
 function checkForMissingFunctions(errors, {actionFactories, guards}, edges) {
   forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
-    const [yedFrom, _event] = fromEventKey.split(YED_LABEL_DECODE_SEP);
+    const [yedFrom, _event] = fromEventKey.split(SEP);
     // Anything but empty string is a valid state name
     const isValidStateName = Boolean;
     // For now events can be empty string or non-empty strings so always valid
@@ -216,7 +223,7 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges, injected) {
     forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
       // Example:
       // yedFrom: "n0::n0" ; userFrom: "entered by user" ; _from: "n0::n0[symbol]entered by user"
-      const [yedFrom, _event] = fromEventKey.split(YED_LABEL_DECODE_SEP);
+      const [yedFrom, _event] = fromEventKey.split(SEP);
       const _from = yedState2KinglyState(stateYed2KinglyMap, yedFrom);
       const userFrom = stateYed2KinglyMap[yedFrom];
       let from = _from;
@@ -224,7 +231,11 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges, injected) {
 
       // Case: init transition
       if (isInitialTransition(yedFrom, userFrom)) {
-        // TODO: rule <- No event allowed on initial states
+        // rule <- No event allowed on initial states
+        // Not an unrecoverable error, as the event will be ignored
+        if (event.trim()){
+          errors.push({message: `getKinglyTransitions > No event allowed on initial states`})
+        }
         //   Case: top-level init transition
         if (isTopLevelInitTransition(yedFrom, userFrom)) {
           from = INIT_STATE;
@@ -233,7 +244,7 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges, injected) {
           //   Case: non-top-level, i.e. compound state's init transition
           // -> there is a parent to the origin node, that's the compound node we want
           const fromParent = getYedParentNode(yedFrom);
-          from = [fromParent, stateYed2KinglyMap[fromParent]].join(STATE_LABEL_SEP);
+          from = [fromParent, stateYed2KinglyMap[fromParent]].join(SEP);
           event = INIT_EVENT;
         }
       }
@@ -289,8 +300,7 @@ function computeTransitionsAndStatesFromXmlString(yedString) {
   const {graphml: graphObj} = tryCatch(parseGraphMlString, handleParseGraphMlStringErrors)(yedString);
   if (_errors.length > 0) throw new Yed2KinglyConversionError(_errors);
 
-  // TODO: remove the history states from the hierarchy
-  const stateHierarchy = mapOverTree(stateHierarchyLens, x => x, graphObj)[STATE_LABEL_SEP];
+  const stateHierarchy = mapOverTree(stateHierarchyLens, x => x, graphObj)[SEP];
   const stateYed2KinglyMap = mapOverTree(stateYed2KinglyLens, x => x, graphObj);
   const yedEdges = graphObj.graph.edge;
 

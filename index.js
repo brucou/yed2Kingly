@@ -8,6 +8,7 @@ const fs = require('fs');
 const {Command} = require('commander');
 const {computeTransitionsAndStatesFromXmlString} = require('./conversion');
 const {checkKinglyContracts} = require('./helpers');
+const {DEFAULT_ACTION_FACTORY_STR} = require('./properties')
 const program = new Command();
 
 // Configure syntax, parse and run
@@ -18,8 +19,7 @@ program
 program.parse(process.argv);
 
 // Conversion function
-// DOC: The assumption here is that the generated JS file is used in the browser,
-// so we export a-la ES modules
+// DOC: We export two files: one cjs for node.js and js for browser esm consumption
 // NTH: May could be the export through an option (to generate module.exports = ...)
 // NTH: handle several files at the same time
 // NTH: add an output option
@@ -70,7 +70,7 @@ function convertYedFile(_file) {
             // actionList.push(actionStr);
 
             return `
-          {predicate: guards["${predicateStr}"], to: "${to}", action: aF["${actionStr}"]}, 
+          {predicate: guards["${predicateStr}"], to: ${JSON.stringify(to)}, action: aF["${actionStr}"]}, 
           `.trim()
           }).join("\n")
             }
@@ -83,7 +83,7 @@ function convertYedFile(_file) {
           actionList.add(actionStr);
 
           return `
-          { from: "${from}", event: "${event}", to: "${to}", action: aF["${actionStr}"] } 
+          { from: "${from}", event: "${event}", to: ${JSON.stringify(to)}, action: aF["${actionStr}"] } 
         `.trim().concat(", ")
         }
       }).join("\n");
@@ -97,12 +97,13 @@ function convertYedFile(_file) {
       // Using natural language sentences in the graph is valid
       // However, you will have to find a valid JavaScript name for the matching function
       // -----Guards------
-      // const guards = {
-         ${Array.from(predicateList).map(pred => `//   "${pred}": function (){},`).join('\n')}
+      // const guards = {${Array.from(predicateList).map(pred => `\n//   "${pred}": function (){},`)}
       // };
       // -----Actions------
-      // const actions = {
-         ${Array.from(actionList).map(action => `//   "${action}": function (){},`).join('\n')}
+      // const actions = {${Array.from(actionList)
+        .map(action => action !== DEFAULT_ACTION_FACTORY_STR
+          ? `\n//   "${action}": function (){},`
+          : "")}
       // };
       // ----------------
          function contains(as, bs){
@@ -185,14 +186,6 @@ function convertYedFile(_file) {
 // TODO: use a left/right option monad. Error management is getting painful
 // like wrap prettier in try catch with left/right associated, I do not accumulate errors so I should definitely try
 // an option monad
-// Do that after passing at least one tests of real end-to-end kingly conversion
-// TODO left:
-// - check directly the generated states and transitions with Kingly but now! ABSOLUTELY DO IT
-// - tests!!
-// - handle errors
-//   - wrong kingly format (syntax)
-//   - wrong kingly format (semantics)
-//   - in both case, run kingly in check contract mode with fake action & guards
 
 // TODO: rewrite the demo on website with this (at least one) and update the version of kingly and
 // check it works. Chess example good it has history inside

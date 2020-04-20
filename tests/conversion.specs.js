@@ -519,7 +519,7 @@ describe('Conversion yed to kingly', function () {
         "n1ღGroup 1": {
           "n1::n0ღShowing\nmini UI": "",
           // "n1::n1ღinit",
-          "n1::n2ღH*": "",
+          // "n1::n2ღH*": "",
           "n1::n3ღbig UI collapsed": {
             "n1::n3::n0ღIf": "",
             // "n1::n3::n1ღinit",
@@ -531,7 +531,7 @@ describe('Conversion yed to kingly', function () {
           "n3::n0ღran kan \nkan": "",
           // "n3::n1ღinit",
           "n3::n2ღpa dam\ndam": "",
-          "n3::n3ღH": "",
+          // "n3::n3ღH": "",
         },
       });
     });

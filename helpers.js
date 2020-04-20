@@ -1,5 +1,5 @@
 const parser = require('fast-xml-parser');
-const {YED_DEEP_HISTORY_STATE, YED_SHALLOW_HISTORY_STATE, YED_ENTRY_STATE, STATE_LABEL_SEP, DEFAULT_ACTION_FACTORY_STR,DEFAULT_ACTION_FACTORY} = require('./properties');
+const {YED_DEEP_HISTORY_STATE, YED_SHALLOW_HISTORY_STATE, YED_ENTRY_STATE, SEP, DEFAULT_ACTION_FACTORY_STR,DEFAULT_ACTION_FACTORY} = require('./properties');
 const {historyState, SHALLOW, DEEP, fsmContracts, createStateMachine} = require("kingly");
 const { mapOverObj } = require('fp-rosetree');
 
@@ -26,7 +26,6 @@ class Yed2KinglyConversionError extends Error {
       // formatted message
       const fm = `At ${location}: ${when} => ${message}`;
       console.info(fm, info);
-      // TODO: see if I keep or not
       console.error(m);
       return fm
     }).concat([`See extra info in console`]).join('\n');
@@ -111,7 +110,7 @@ function getYedParentNode(yedFrom) {
 }
 
 function yedState2KinglyState(stateYed2KinglyMap, yedState) {
-  return [yedState, stateYed2KinglyMap[yedState]].join(STATE_LABEL_SEP);
+  return [yedState, stateYed2KinglyMap[yedState]].join(SEP);
 }
 
 function computeKinglyDestinationState(stateYed2KinglyMap, yedTo) {
@@ -137,7 +136,7 @@ function mapGuardStrToGuardFn(guards, predicateStr) {
 }
 
 function markFunctionStr(_, str){
-  return ["", "", "", str, "", "", ""].join(STATE_LABEL_SEP)
+  return ["", "", "", str, "", "", ""].join(SEP)
 }
 
 function markFunctionNoop(_, str){

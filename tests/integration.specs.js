@@ -706,7 +706,7 @@ describe('Conversion yed to kingly', function() {
       return [eventSpace[scenario[0]], eventSpace[scenario[1]], eventSpace[scenario[2]]];
     });
     const outputs1 = cases.map(scenario => {
-      const fsm1 = createStateMachine(fsmDef1, {debug: {console, checkContracts: fsmContracts}});
+      const fsm1 = createStateMachine(fsmDef1, settings);
       return scenario.map(fsm1);
     });
     const expected1 = [
