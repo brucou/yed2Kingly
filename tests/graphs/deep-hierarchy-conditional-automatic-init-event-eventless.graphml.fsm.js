@@ -4,22 +4,22 @@
 // However, you will have to find a valid JavaScript name for the matching function
 // -----Guards------
 // const guards = {
-//   "isNumber": function (){},,
-//   "not(isNumber)": function (){},,
+//   "isNumber": function (){},
+//   "not(isNumber)": function (){},
 //   "shouldReturnToA": function (){},
 // };
 // -----Actions------
-// const actions = {,
-//   "logAtoGroup1": function (){},,
-//   "logGroup1toGroup2": function (){},,
-//   "logGroup2toGroup3": function (){},,
-//   "logGroup3BtoGroup4": function (){},,
-//   "logGroup3toB": function (){},,
-//   "logGroup3toC": function (){},,
-//   "logAtoB": function (){},,
-//   "logAtoC": function (){},,
-//   "logBtoD": function (){},,
-//   "logCtoD": function (){},,
+// const actions = {
+//   "logAtoGroup1": function (){},
+//   "logGroup1toGroup2": function (){},
+//   "logGroup2toGroup3": function (){},
+//   "logGroup3BtoGroup4": function (){},
+//   "logGroup3toB": function (){},
+//   "logGroup3toC": function (){},
+//   "logAtoB": function (){},
+//   "logAtoC": function (){},
+//   "logBtoD": function (){},
+//   "logCtoD": function (){},
 //   "logDtoA": function (){},
 // };
 // ----------------

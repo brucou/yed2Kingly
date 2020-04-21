@@ -6,11 +6,11 @@
 // const guards = {
 // };
 // -----Actions------
-// const actions = {,
-//   "logDtoGroup1H*": function (){},,
-//   "logBtoD": function (){},,
-//   "logBtoC": function (){},,
-//   "logCtoD": function (){},,
+// const actions = {
+//   "logDtoGroup1H*": function (){},
+//   "logBtoD": function (){},
+//   "logBtoC": function (){},
+//   "logCtoD": function (){},
 //   "logGroup1toC": function (){},
 // };
 // ----------------

@@ -93,17 +93,20 @@ function convertYedFile(_file) {
       // We also tried not to use too many JS language features in case compatibility with IE11- is desired
       const fileContents = `
       // Copy-paste help
-      // For debugging purposes, functions should all have a name
-      // Using natural language sentences in the graph is valid
-      // However, you will have to find a valid JavaScript name for the matching function
+      // For debugging purposes, guards and actions functions should all have a name
+      // Using natural language sentences for labels in the graph is valid
+      // guard and action functions name still follow JavaScript rules though
       // -----Guards------
-      // const guards = {${Array.from(predicateList).map(pred => `\n//   "${pred}": function (){},`)}
+      // const guards = {${Array.from(predicateList)
+        .map(pred => `\n//   "${pred}": function (){},`)
+        .join("")}
       // };
       // -----Actions------
       // const actions = {${Array.from(actionList)
         .map(action => action !== DEFAULT_ACTION_FACTORY_STR
           ? `\n//   "${action}": function (){},`
-          : "")}
+          : "")
+        .join("")}
       // };
       // ----------------
          function contains(as, bs){

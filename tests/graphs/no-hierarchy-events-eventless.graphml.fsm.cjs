@@ -7,11 +7,11 @@
 //   "shouldReturnToA": function (){},
 // };
 // -----Actions------
-// const actions = {,
-//   "logAtoB": function (){},,
-//   "logAtoC": function (){},,
-//   "logBtoD": function (){},,
-//   "logCtoD": function (){},,
+// const actions = {
+//   "logAtoB": function (){},
+//   "logAtoC": function (){},
+//   "logBtoD": function (){},
+//   "logCtoD": function (){},
 //   "logDtoA": function (){},
 // };
 // ----------------

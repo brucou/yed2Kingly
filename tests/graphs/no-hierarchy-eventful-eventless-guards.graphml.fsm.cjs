@@ -4,17 +4,17 @@
 // However, you will have to find a valid JavaScript name for the matching function
 // -----Guards------
 // const guards = {
-//   "condition1": function (){},,
-//   "condition2": function (){},,
-//   "condition3": function (){},,
+//   "condition1": function (){},
+//   "condition2": function (){},
+//   "condition3": function (){},
 //   "shouldReturnToA": function (){},
 // };
 // -----Actions------
-// const actions = {,
-//   "logAtoTemp1": function (){},,
-//   "logAtoTemp2": function (){},,
-//   "logAtoDone": function (){},,
-//   "logTemp1toA": function (){},,
+// const actions = {
+//   "logAtoTemp1": function (){},
+//   "logAtoTemp2": function (){},
+//   "logAtoDone": function (){},
+//   "logTemp1toA": function (){},
 //   "logTemp2toA": function (){},
 // };
 // ----------------

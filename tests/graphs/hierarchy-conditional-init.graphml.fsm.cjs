@@ -4,12 +4,12 @@
 // However, you will have to find a valid JavaScript name for the matching function
 // -----Guards------
 // const guards = {
-//   "isNumber": function (){},,
+//   "isNumber": function (){},
 //   "not(isNumber)": function (){},
 // };
 // -----Actions------
-// const actions = {,
-//   "logAtoB": function (){},,
+// const actions = {
+//   "logAtoB": function (){},
 //   "logAtoC": function (){},
 // };
 // ----------------

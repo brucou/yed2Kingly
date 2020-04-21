@@ -7,12 +7,12 @@
 // };
 // -----Actions------
 // const actions = {
-//   "logGroup1toH": function (){},,,
-//   "logBtoC": function (){},,
-//   "logBtoD": function (){},,
-//   "logCtoD": function (){},,
-//   "logGroup1toD": function (){},,
-//   "logGroup1toC": function (){},,
+//   "logGroup1toH": function (){},
+//   "logBtoC": function (){},
+//   "logBtoD": function (){},
+//   "logCtoD": function (){},
+//   "logGroup1toD": function (){},
+//   "logGroup1toC": function (){},
 //   "logDtoD": function (){},
 // };
 // ----------------
