@@ -183,37 +183,3 @@ function convertYedFile(_file) {
   }
 }
 
-// TODO: use a left/right option monad. Error management is getting painful
-// like wrap prettier in try catch with left/right associated, I do not accumulate errors so I should definitely try
-// an option monad
-
-// TODO: rewrite the demo on website with this (at least one) and update the version of kingly and
-// check it works. Chess example good it has history inside
-// or real world also!!
-
-// DOC:
-// Top Init transition (in yed) cannot have actions or event but can have guards (rule comes from Kingly)
-// no ACTION_IDENTITY entry in actionFactories prop (not worth throwing an exception)
-
-// TODO: see how to sanitize guard and action names:
-// function sanitize(string) {
-//   const map = {
-//     ' ': '_',
-//     '(': '$',
-//     ')': '$',
-//     '"': '&quot;',
-//     "'": '&#x27;',
-//     "/": '&#x2F;',
-//   };
-//   const reg = /[ ()"'/]/ig;
-//   return string.trim().replace(reg, (match)=>(map[match]));
-// }
-// LISTER les characters que je peux remplacer et trouver un remplacement
-// can be a ot: #@!`~-+= etc.
-// If some characters are forbidden, throw an error in advance
-// yeah probably allow "() " and forbid the rest and check that (apply to predicate, action and event
-// No actually I don't want to forbid non english base. So after replacing "() " check that the identifier is valid identifier
-// the best way to do that is either eval or use a javascript parser.
-// Could have an option in which the version of JS is chosen and a parser is chosen accordingly
-// todo maybe a day just write the NTH for now
-// for now assume the most restricting i.e. ES3
