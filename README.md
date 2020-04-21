@@ -64,7 +64,7 @@ The following conventions are not rules and are not enforced in any way. They ex
 # Examples
 There are plenty of graph examples in the [test directory](https://github.com/brucou/yed2Kingly/tree/master/tests/graphs). An example, extracted from the tests directory and involving compound states and history pseudo-states is as follows:
 
-![example of yed graph with history pseudo-state and compound state](https://github.com/brucou/yed2Kingly/blob/master/tests/graphs/deep-hierarchy-history-H.png)
+![example of yed graph with history pseudo-state and compound state](https://imgur.com/VjKaIkL.png)
 
 Running the `yed2Kingly` script produces the following JavaScript file:
 
