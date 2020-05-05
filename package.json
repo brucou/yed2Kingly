@@ -14,7 +14,7 @@
     "prettier": "^2.0.4",
     "fast-xml-parser": "^3.16.0",
     "fp-rosetree": "0.6.2",
-    "kingly": "^0.24.0",
+    "kingly": "^0.26.0",
     "ramda": "^0.27.0"
   },
   "prettier": {
@@ -32,7 +32,7 @@
     "properties.js"
   ],
   "license": "MIT",
-    "keywords": [
+  "keywords": [
     "state-machine",
     "state machine",
     "finite state machine",

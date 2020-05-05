@@ -227,6 +227,15 @@ function checkKinglyContracts(states, events, transitions) {
   }
 }
 
+function displayTransitionJSON(t) {
+  return JSON.stringify(t, (key, value) => {
+    if (typeof value === 'function') {
+      return value.name === '' ? '<anonymous>' : `function ${ value.name }()`;
+    }
+    return value
+  });
+}
+
 // https://stackoverflow.com/questions/12303989/cartesian-product-of-multiple-arrays-in-javascript
 // let output = cartesian([1,2],[10,20],[100,200,300]);
 // This is the output of that command:
@@ -273,4 +282,5 @@ module.exports = {
   checkKinglyContracts,
   fakeConsole,
   contains,
+  displayTransitionJSON,
 }

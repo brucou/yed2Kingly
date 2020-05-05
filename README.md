@@ -1,7 +1,7 @@
 # Motivation
 The `yed2Kingly` package aims at supporting the creation of state machines with the [Kingly state machine library](https://brucou.github.io/documentation/). While by design the Kingly configuration for state machines follows a simple and minimal syntax, crafting and maintaining a large state machine by hand can involve repetitive tasks. Such tasks include for instance looking up a transition and remove it, or checking that a new transition to add does not conflict with an existing one.
  
- Furthermore, a large machine is rarely written directly in a written format but is rather supported by some kind of visualization whether hand-written graphs, or professional graph editors. When switching to text editing, the visual information is lost, the text-based version becomes desynchronized with the visual support. 
+ Furthermore, a large machine is rarely written directly in a textual format but is rather supported by some kind of visualization whether hand-written graphs, or professional graph editors. When switching to text editing, the visual information is lost, the text-based version eventually becomes desynchronized with the visual support. 
 
 This is a case in hand where visual tooling can strengthen part of an error-prone manual process, and automate the repetitive tasks.
 
@@ -10,7 +10,7 @@ This is a case in hand where visual tooling can strengthen part of an error-pron
 This makes yEd a valuable tool to use for state machine creation, edition and maintenance. yEd exists in desktop and online versions. I recommend the desktop version anytime of the day on the grounds that it is more productive for serious tasks, but your mileage may vary. For educational or demonstration purposes, there may be educational value in the online version.
 
 # How does it work?
-In a typical process, I start designing a machine from the specifications by drawing it in the yEd editor. When I am done or ready to test the results of my design, I save the file. yEd by default saves its files in a `.grpahml` format. I save the graphml file in the same directory in which I want to use the created state machine. From there, a previously launched watcher runs the `yEd2Kingly` node script on the newly saved file and generates a JavaScript file which exports the events, state hierarchy and transitions contained in the graph -- you can of course also run the script manually instead of using a watcher. The provided exports can then be used as parameters to create a Kingly state machine.
+In a typical process, I start designing a machine from the specifications by drawing it in the yEd editor. When I am done or ready to test the results of my design, I save the file. yEd by default saves its files in a `.graphml` format. I save the graphml file in the same directory in which I want to use the created state machine. From there, a previously launched watcher runs the `yEd2Kingly` node script on the newly saved file and generates a JavaScript file which exports the events, state hierarchy and transitions contained in the graph -- you can of course also run the script manually instead of using a watcher. The provided exports can then be used as parameters to create a Kingly state machine.
 
 # Install
 `npm install yEd2Kingly`

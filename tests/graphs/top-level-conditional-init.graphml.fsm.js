@@ -1,7 +1,7 @@
 // Copy-paste help
-// For debugging purposes, functions should all have a name
-// Using natural language sentences in the graph is valid
-// However, you will have to find a valid JavaScript name for the matching function
+// For debugging purposes, guards and actions functions should all have a name
+// Using natural language sentences for labels in the graph is valid
+// guard and action functions name still follow JavaScript rules though
 // -----Guards------
 // const guards = {
 //   "isNumber": function (){},
@@ -18,7 +18,7 @@ function contains(as, bs) {
     return bs.indexOf(a) > -1;
   });
 }
-var NO_OUTPUT = null;
+var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
 var events = ["continue"];
 var states = { n0ღNumber: "", n2ღOther: "", n3ღDone: "" };

@@ -37,8 +37,8 @@ describe('End-to-end graphml to kingly', function () {
       isNumber: (s, e, stg) => typeof s.n === 'number',
     };
     const actionFactories = {
-      logOther: (s, e, stg) => ({ outputs: `logOther run on ${s.n}`, updates: {} }),
-      logNumber: (s, e, stg) => ({ outputs: `logNumber run on ${s.n}`, updates: {} }),
+      logOther: (s, e, stg) => ({ outputs: [`logOther run on ${s.n}`], updates: {} }),
+      logNumber: (s, e, stg) => ({ outputs: [`logNumber run on ${s.n}`], updates: {} }),
     };
     const fsm1 = createStateMachine({
       initialExtendedState: { n: 0 },
@@ -56,10 +56,10 @@ describe('End-to-end graphml to kingly', function () {
     }, settings);
 
     // Run the tests
-    const outputs1 = [{ [events[0] + 'X']: void 0 }, { [events[0]]: void 0 }, { [events[0]]: void 0 }].map(fsm1);
-    const expected1 = [NO_OUTPUT, ['logNumber run on 0'], NO_OUTPUT];
-    const outputs2 = [{ [events[0] + 'X']: void 0 }, { [events[0]]: void 0 }, { [events[0]]: void 0 }].map(fsm2);
-    const expected2 = [NO_OUTPUT, ['logOther run on '], NO_OUTPUT];
+    const outputs1 = [{[events[0] + 'X']: void 0}, {[events[0]]: void 0}, {[events[0]]: void 0}].map(fsm1);
+    const expected1 = [null, ['logNumber run on 0'], null];
+    const outputs2 = [{[events[0] + 'X']: void 0}, {[events[0]]: void 0}, {[events[0]]: void 0}].map(fsm2);
+    const expected2 = [null, ['logOther run on '], null];
     it('runs the machine as per the graph', function() {
       assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
       assert.deepEqual(outputs2, expected2, `Branch machine initialized with string ok`);
@@ -243,9 +243,9 @@ describe('End-to-end graphml to kingly', function () {
       shouldReturnToA: (s, e, stg) => s.shouldReturnToA,
       // This time we test on event data, so we test also the guard parameters
       // are as expected
-      condition1: (s, e, stg) => e & 1,
-      condition2: (s, e, stg) => e & 2,
-      condition3: (s, e, stg) => e & 4,
+      condition1: (s, e, stg) => Boolean(e & 1),
+      condition2: (s, e, stg) => Boolean(e & 2),
+      condition3: (s, e, stg) => Boolean(e & 4),
     };
     const actionFactories = {
       logAtoTemp1: (s, e, stg) => traceTransition('A -> Temp1'),
@@ -282,15 +282,15 @@ describe('End-to-end graphml to kingly', function () {
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       // [cond1, cond23]
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Temp2', 'Temp2 -> A']],
-      // [!cond]
-      [['A -> Temp1', 'Temp1 -> A'], null],
+      // [cond1, !cond]
+      [['A -> Temp1', 'Temp1 -> A'], [null]],
       // [cond2, x]
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp2', 'Temp2 -> A']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Done', null]],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp2', 'Temp2 -> A']],
-      [['A -> Temp2', 'Temp2 -> A'], null],
+      [['A -> Temp2', 'Temp2 -> A'], [null]],
       // [cond3, x]
       [['A -> Done', null], null],
       [['A -> Done', null], null],
@@ -304,21 +304,21 @@ describe('End-to-end graphml to kingly', function () {
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Done', null]],
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Temp2', 'Temp2 -> A']],
-      [['A -> Temp1', 'Temp1 -> A'], null],
+      [['A -> Temp1', 'Temp1 -> A'], [null]],
       // [cond23, x]
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp2', 'Temp2 -> A']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Done', null]],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp2', 'Temp2 -> A']],
-      [['A -> Temp2', 'Temp2 -> A'], null],
+      [['A -> Temp2', 'Temp2 -> A'], [null]],
       // [!cond, x]
-      [null, ['A -> Temp1', 'Temp1 -> A']],
-      [null, ['A -> Temp2', 'Temp2 -> A']],
-      [null, ['A -> Done', null]],
-      [null, ['A -> Temp1', 'Temp1 -> A']],
-      [null, ['A -> Temp2', 'Temp2 -> A']],
-      [null, null],
+      [[null], ['A -> Temp1', 'Temp1 -> A']],
+      [[null], ['A -> Temp2', 'Temp2 -> A']],
+      [[null], ['A -> Done', null]],
+      [[null], ['A -> Temp1', 'Temp1 -> A']],
+      [[null], ['A -> Temp2', 'Temp2 -> A']],
+      [[null], [null]],
     ];
 
     const fsmDef2 = {
@@ -338,48 +338,48 @@ describe('End-to-end graphml to kingly', function () {
       // [cond1, cond2]
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Temp2', 'Temp2 -> A']],
       // [cond1, cond3]
-      [['A -> Temp1', 'Temp1 -> A'], ['A -> Done', null]],
+      [['A -> Temp1', 'Temp1 -> A'], ['A -> Done']],
       // [cond1, cond12]
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       // [cond1, cond23]
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Temp2', 'Temp2 -> A']],
-      // [!cond]
-      [['A -> Temp1', 'Temp1 -> A'], null],
+      // [cond1, !cond]
+      [['A -> Temp1', 'Temp1 -> A'], [null]],
       // [cond2, x]
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp2', 'Temp2 -> A']],
-      [['A -> Temp2', 'Temp2 -> A'], ['A -> Done', null]],
+      [['A -> Temp2', 'Temp2 -> A'], ['A -> Done']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp2', 'Temp2 -> A']],
-      [['A -> Temp2', 'Temp2 -> A'], null],
+      [['A -> Temp2', 'Temp2 -> A'], [null]],
       // [cond3, x]
-      [['A -> Done', null], ['A -> Temp1', 'Temp1 -> A']],
-      [['A -> Done', null], ['A -> Temp2', 'Temp2 -> A']],
-      [['A -> Done', null], ['A -> Done', null]],
-      [['A -> Done', null], ['A -> Temp1', 'Temp1 -> A']],
-      [['A -> Done', null], ['A -> Temp2', 'Temp2 -> A']],
-      [['A -> Done', null], null],
+      [['A -> Done'], ['A -> Temp1', 'Temp1 -> A']],
+      [['A -> Done'], ['A -> Temp2', 'Temp2 -> A']],
+      [['A -> Done'], ['A -> Done']],
+      [['A -> Done'], ['A -> Temp1', 'Temp1 -> A']],
+      [['A -> Done'], ['A -> Temp2', 'Temp2 -> A']],
+      [['A -> Done'], [null]],
       // [cond12, x]
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Temp2', 'Temp2 -> A']],
-      [['A -> Temp1', 'Temp1 -> A'], ['A -> Done', null]],
+      [['A -> Temp1', 'Temp1 -> A'], ['A -> Done']],
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       [['A -> Temp1', 'Temp1 -> A'], ['A -> Temp2', 'Temp2 -> A']],
-      [['A -> Temp1', 'Temp1 -> A'], null],
+      [['A -> Temp1', 'Temp1 -> A'], [null]],
       // [cond23, x]
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp2', 'Temp2 -> A']],
-      [['A -> Temp2', 'Temp2 -> A'], ['A -> Done', null]],
+      [['A -> Temp2', 'Temp2 -> A'], ['A -> Done']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp1', 'Temp1 -> A']],
       [['A -> Temp2', 'Temp2 -> A'], ['A -> Temp2', 'Temp2 -> A']],
-      [['A -> Temp2', 'Temp2 -> A'], null],
+      [['A -> Temp2', 'Temp2 -> A'], [null]],
       // [!cond, x]
-      [null, ['A -> Temp1', 'Temp1 -> A']],
-      [null, ['A -> Temp2', 'Temp2 -> A']],
-      [null, ['A -> Done', null]],
-      [null, ['A -> Temp1', 'Temp1 -> A']],
-      [null, ['A -> Temp2', 'Temp2 -> A']],
-      [null, null],
+      [[null], ['A -> Temp1', 'Temp1 -> A']],
+      [[null], ['A -> Temp2', 'Temp2 -> A']],
+      [[null], ['A -> Done']],
+      [[null], ['A -> Temp1', 'Temp1 -> A']],
+      [[null], ['A -> Temp2', 'Temp2 -> A']],
+      [[null], [null]],
     ];
 
     it('runs the machine as per the graph', function() {
@@ -421,8 +421,8 @@ describe('End-to-end graphml to kingly', function () {
       isNumber: (s, e, stg) => typeof s.n === 'number',
     };
     const actionFactories = {
-      logOther: (s, e, stg) => ({ outputs: `logOther run on ${s.n}`, updates: {} }),
-      logNumber: (s, e, stg) => ({ outputs: `logNumber run on ${s.n}`, updates: {} }),
+      logOther: (s, e, stg) => ({ outputs: [`logOther run on ${s.n}`], updates: {} }),
+      logNumber: (s, e, stg) => ({ outputs: [`logNumber run on ${s.n}`], updates: {} }),
     };
     const fsmDef1 = {
       updateState,
@@ -442,9 +442,9 @@ describe('End-to-end graphml to kingly', function () {
     const fsm2 = createStateMachine(fsmDef2, settings);
 
     const outputs1 = [{ [events[0] + 'X']: void 0 }, { [events[0]]: void 0 }, { [events[0]]: void 0 }].map(fsm1);
-    const expected1 = [NO_OUTPUT, ['logNumber run on 0'], NO_OUTPUT];
+    const expected1 = [null, ['logNumber run on 0'], null];
     const outputs2 = [{ [events[0] + 'X']: void 0 }, { [events[0]]: void 0 }, { [events[0]]: void 0 }].map(fsm2);
-    const expected2 = [NO_OUTPUT, ['logOther run on '], NO_OUTPUT];
+    const expected2 = [null, ['logOther run on '], null];
 
     it('runs the machine as per the graph', function() {
       assert.deepEqual(events, ['continue'], `events correctly parsed`);
@@ -501,7 +501,7 @@ describe('End-to-end graphml to kingly', function () {
     };
     const fsm1 = createStateMachine(fsmDef1, settings1);
     const outputs1 = [unknownEvent, { event1: void 0 }].map(fsm1);
-    const expected1 = [null, [null, 'A -> B']];
+    const expected1 = [null, ['A -> B']];
 
     const fsmDef2 = {
       updateState,
@@ -512,7 +512,7 @@ describe('End-to-end graphml to kingly', function () {
     };
     const fsm2 = createStateMachine(fsmDef2, settings2);
     const outputs2 = [unknownEvent, { event1: void 0 }].map(fsm2);
-    const expected2 = [null, [null, 'A -> C']];
+    const expected2 = [null, ['A -> C']];
 
     it('runs the machine as per the graph', function() {
       assert.deepEqual(events, ['event1'], `The list of events is correctly parsed`);
@@ -551,7 +551,7 @@ describe('End-to-end graphml to kingly', function () {
       // are as expected
       'not(isNumber)': (s, e, stg) => typeof e.n !== 'number',
       isNumber: (s, e, stg) => typeof e.n === 'number',
-      shouldReturnToA: (s, e, stg) => e.shouldReturnToA,
+      shouldReturnToA: (s, e, stg) => Boolean(e.shouldReturnToA),
     };
     const actionFactories = {
       logAtoGroup1: (s, e, stg) => traceTransition('A -> Group1'),
@@ -637,8 +637,8 @@ describe('End-to-end graphml to kingly', function () {
       assert.deepEqual(
         outputs1,
         [
-          ['A -> Group1', 'Group1 -> B', null, 'Group2 -> Group3', 'Group3 -> B'],
-          ['Group3 -> Group4', null],
+          ['A -> Group1', 'Group1 -> B', 'Group2 -> Group3', 'Group3 -> B'],
+          ['Group3 -> Group4'],
           ['A -> B'],
           ['B -> D', null],
           null,
@@ -648,8 +648,8 @@ describe('End-to-end graphml to kingly', function () {
       assert.deepEqual(
         outputs2,
         [
-          ['A -> Group1', 'Group1 -> B', null, 'Group2 -> Group3', 'Group3 -> B'],
-          ['Group3 -> Group4', null],
+          ['A -> Group1', 'Group1 -> B', 'Group2 -> Group3', 'Group3 -> B'],
+          ['Group3 -> Group4'],
           ['A -> C'],
           ['C -> D', null],
           null,
@@ -659,8 +659,8 @@ describe('End-to-end graphml to kingly', function () {
       assert.deepEqual(
         outputs3,
         [
-          ['A -> Group1', 'Group1 -> B', null, 'Group2 -> Group3', 'Group3 -> B'],
-          ['Group3 -> Group4', null],
+          ['A -> Group1', 'Group1 -> B', 'Group2 -> Group3', 'Group3 -> B'],
+          ['Group3 -> Group4'],
           ['A -> B'],
           ['B -> D', 'D -> A'],
           ['A -> C'],
@@ -670,8 +670,8 @@ describe('End-to-end graphml to kingly', function () {
       assert.deepEqual(
         outputs4,
         [
-          ['A -> Group1', 'Group1 -> B', null, 'Group2 -> Group3', 'Group3 -> B'],
-          ['Group3 -> Group4', null],
+          ['A -> Group1', 'Group1 -> B', 'Group2 -> Group3', 'Group3 -> B'],
+          ['Group3 -> Group4'],
           ['A -> C'],
           ['C -> D', 'D -> A'],
           ['A -> B'],
@@ -680,7 +680,10 @@ describe('End-to-end graphml to kingly', function () {
       );
       assert.deepEqual(
         outputs5,
-        [['A -> Group1', 'Group1 -> B', null, 'Group2 -> Group3', 'Group3 -> C'], null, null, null, null],
+        [
+          ['A -> Group1', 'Group1 -> B', 'Group2 -> Group3', 'Group3 -> C'],
+          null, null, null, null
+        ],
         `ok`
       );
     });
@@ -731,39 +734,39 @@ describe('End-to-end graphml to kingly', function () {
       // [event1, event1, event1]
       [['B -> D'], null, null],
       [['B -> D'], null, null],
-      [['B -> D'], null, [null, 'D -> Group1H']],
+      [['B -> D'], null, ['D -> Group1H']],
       // [event1, event2, event1]
       [['B -> D'], null, null],
       [['B -> D'], null, null],
-      [['B -> D'], null, [null, 'D -> Group1H']],
+      [['B -> D'], null, ['D -> Group1H']],
       // [event1, event3, event1]
-      [['B -> D'], [null, 'D -> Group1H'], null],
-      [['B -> D'], [null, 'D -> Group1H'], null],
-      [['B -> D'], [null, 'D -> Group1H'], [null, 'D -> Group1H']],
+      [['B -> D'], ['D -> Group1H'], null],
+      [['B -> D'], ['D -> Group1H'], null],
+      [['B -> D'], ['D -> Group1H'], ['D -> Group1H']],
       // [event2, event1, event1]
       [['B -> C'], ['C -> D'], null],
       [['B -> C'], ['C -> D'], null],
-      [['B -> C'], ['C -> D'], [null, 'D -> Group1H']],
+      [['B -> C'], ['C -> D'], [ 'D -> Group1H']],
       // [event2, event2, event1]
       [['B -> C'], null, ['C -> D']],
       [['B -> C'], null, null],
-      [['B -> C'], null, [null, 'D -> Group1H']],
+      [['B -> C'], null, ['D -> Group1H']],
       // [event2, event3, event1]
-      [['B -> C'], [null, 'D -> Group1H'], ['C -> D']],
-      [['B -> C'], [null, 'D -> Group1H'], null],
-      [['B -> C'], [null, 'D -> Group1H'], [null, 'D -> Group1H']],
+      [['B -> C'], ['D -> Group1H'], ['C -> D']],
+      [['B -> C'], ['D -> Group1H'], null],
+      [['B -> C'], ['D -> Group1H'], ['D -> Group1H']],
       // [event3, event1, event1]
-      [[null, 'D -> Group1H'], ['B -> D'], null],
-      [[null, 'D -> Group1H'], ['B -> D'], null],
-      [[null, 'D -> Group1H'], ['B -> D'], [null, 'D -> Group1H']],
+      [['D -> Group1H'], ['B -> D'], null],
+      [['D -> Group1H'], ['B -> D'], null],
+      [['D -> Group1H'], ['B -> D'], ['D -> Group1H']],
       // [event3, event2, event1]
-      [[null, 'D -> Group1H'], ['B -> C'], ['C -> D']],
-      [[null, 'D -> Group1H'], ['B -> C'], null],
-      [[null, 'D -> Group1H'], ['B -> C'], [null, 'D -> Group1H']],
+      [['D -> Group1H'], ['B -> C'], ['C -> D']],
+      [['D -> Group1H'], ['B -> C'], null],
+      [['D -> Group1H'], ['B -> C'], ['D -> Group1H']],
       // [event3, event3, event1]
-      [[null, 'D -> Group1H'], [null, 'D -> Group1H'], ['B -> D']],
-      [[null, 'D -> Group1H'], [null, 'D -> Group1H'], ['B -> C']],
-      [[null, 'D -> Group1H'], [null, 'D -> Group1H'], [null, 'D -> Group1H']],
+      [['D -> Group1H'], ['D -> Group1H'], ['B -> D']],
+      [['D -> Group1H'], ['D -> Group1H'], ['B -> C']],
+      [['D -> Group1H'], ['D -> Group1H'], ['D -> Group1H']],
     ];
 
     it('runs the machine as per the graph', function() {
@@ -829,39 +832,39 @@ describe('End-to-end graphml to kingly', function () {
       // [event1, event1, event1]
       [['B -> D'], null, null],
       [['B -> D'], null, null],
-      [['B -> D'], null, [null, 'D -> Group1H*']],
+      [['B -> D'], null, ['D -> Group1H*']],
       // [event1, event2, event1]
       [['B -> D'], null, null],
       [['B -> D'], null, null],
-      [['B -> D'], null, [null, 'D -> Group1H*']],
+      [['B -> D'], null, ['D -> Group1H*']],
       // [event1, event3, event1]
-      [['B -> D'], [null, 'D -> Group1H*'], null],
-      [['B -> D'], [null, 'D -> Group1H*'], null],
-      [['B -> D'], [null, 'D -> Group1H*'], [null, 'D -> Group1H*']],
+      [['B -> D'], ['D -> Group1H*'], null],
+      [['B -> D'], ['D -> Group1H*'], null],
+      [['B -> D'], ['D -> Group1H*'], ['D -> Group1H*']],
       // [event2, event1, event1]
       [['B -> C'], ['C -> D'], null],
       [['B -> C'], ['C -> D'], null],
-      [['B -> C'], ['C -> D'], [null, 'D -> Group1H*']],
+      [['B -> C'], ['C -> D'], ['D -> Group1H*']],
       // [event2, event2, event1]
       [['B -> C'], null, ['C -> D']],
       [['B -> C'], null, null],
-      [['B -> C'], null, [null, 'D -> Group1H*']],
+      [['B -> C'], null, ['D -> Group1H*']],
       // [event2, event3, event1]
-      [['B -> C'], [null, 'D -> Group1H*'], ['C -> D']],
-      [['B -> C'], [null, 'D -> Group1H*'], null],
-      [['B -> C'], [null, 'D -> Group1H*'], [null, 'D -> Group1H*']],
+      [['B -> C'], ['D -> Group1H*'], ['C -> D']],
+      [['B -> C'], ['D -> Group1H*'], null],
+      [['B -> C'], ['D -> Group1H*'], ['D -> Group1H*']],
       // [event3, event1, event1]
-      [[null, 'D -> Group1H*'], ['B -> D'], null],
-      [[null, 'D -> Group1H*'], ['B -> D'], null],
-      [[null, 'D -> Group1H*'], ['B -> D'], [null, 'D -> Group1H*']],
+      [['D -> Group1H*'], ['B -> D'], null],
+      [['D -> Group1H*'], ['B -> D'], null],
+      [['D -> Group1H*'], ['B -> D'], ['D -> Group1H*']],
       // [event3, event2, event1]
-      [[null, 'D -> Group1H*'], ['B -> C'], ['C -> D']],
-      [[null, 'D -> Group1H*'], ['B -> C'], null],
-      [[null, 'D -> Group1H*'], ['B -> C'], [null, 'D -> Group1H*']],
+      [['D -> Group1H*'], ['B -> C'], ['C -> D']],
+      [['D -> Group1H*'], ['B -> C'], null],
+      [['D -> Group1H*'], ['B -> C'], ['D -> Group1H*']],
       // [event3, event3, event1]
-      [[null, 'D -> Group1H*'], [null, 'D -> Group1H*'], ['B -> D']],
-      [[null, 'D -> Group1H*'], [null, 'D -> Group1H*'], ['B -> C']],
-      [[null, 'D -> Group1H*'], [null, 'D -> Group1H*'], [null, 'D -> Group1H*']],
+      [['D -> Group1H*'], ['D -> Group1H*'], ['B -> D']],
+      [['D -> Group1H*'], ['D -> Group1H*'], ['B -> C']],
+      [['D -> Group1H*'], ['D -> Group1H*'], ['D -> Group1H*']],
     ];
 
     it('runs the machine as per the graph', function() {
@@ -930,39 +933,39 @@ describe('End-to-end graphml to kingly', function () {
       // [event1, event1, event1]
       [['B -> D'], ['D -> D'], null],
       [['B -> D'], ['D -> D'], null],
-      [['B -> D'], ['D -> D'], ['Group1 -> Group1H*', null]],
+      [['B -> D'], ['D -> D'], ['Group1 -> Group1H*']],
       // [event1, event2, event1]
       [['B -> D'], null, ['D -> D']],
       [['B -> D'], null, null],
-      [['B -> D'], null, ['Group1 -> Group1H*', null]],
+      [['B -> D'], null, ['Group1 -> Group1H*']],
       // [event1, event3, event1]
-      [['B -> D'], ['Group1 -> Group1H*', null], ['D -> D']],
-      [['B -> D'], ['Group1 -> Group1H*', null], null],
-      [['B -> D'], ['Group1 -> Group1H*', null], ['Group1 -> Group1H*', null]],
+      [['B -> D'], ['Group1 -> Group1H*'], ['D -> D']],
+      [['B -> D'], ['Group1 -> Group1H*'], null],
+      [['B -> D'], ['Group1 -> Group1H*'], ['Group1 -> Group1H*']],
       // [event2, event1, event1]
       [['B -> C', 'C -> D'], null, null],
       [['B -> C', 'C -> D'], null, null],
-      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H*', null]],
+      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H*']],
       // [event2, event2, event1]
       [['B -> C', 'C -> D'], null, null],
       [['B -> C', 'C -> D'], null, null],
-      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H*', null]],
+      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H*']],
       // [event2, event3, event1]
-      [['B -> C', 'C -> D'], ['Group1 -> Group1H*', null], null],
-      [['B -> C', 'C -> D'], ['Group1 -> Group1H*', null], null],
-      [['B -> C', 'C -> D'], ['Group1 -> Group1H*', null], ['Group1 -> Group1H*', null]],
+      [['B -> C', 'C -> D'], ['Group1 -> Group1H*'], null],
+      [['B -> C', 'C -> D'], ['Group1 -> Group1H*'], null],
+      [['B -> C', 'C -> D'], ['Group1 -> Group1H*'], ['Group1 -> Group1H*']],
       // [event3, event1, event1]
-      [['Group1 -> Group1H*', null], ['B -> D'], ['D -> D']],
-      [['Group1 -> Group1H*', null], ['B -> D'], null],
-      [['Group1 -> Group1H*', null], ['B -> D'], ['Group1 -> Group1H*', null]],
+      [['Group1 -> Group1H*'], ['B -> D'], ['D -> D']],
+      [['Group1 -> Group1H*'], ['B -> D'], null],
+      [['Group1 -> Group1H*'], ['B -> D'], ['Group1 -> Group1H*']],
       // [event3, event2, event1]
-      [['Group1 -> Group1H*', null], ['B -> C', 'C -> D'], null],
-      [['Group1 -> Group1H*', null], ['B -> C', 'C -> D'], null],
-      [['Group1 -> Group1H*', null], ['B -> C', 'C -> D'], ['Group1 -> Group1H*', null]],
+      [['Group1 -> Group1H*'], ['B -> C', 'C -> D'], null],
+      [['Group1 -> Group1H*'], ['B -> C', 'C -> D'], null],
+      [['Group1 -> Group1H*'], ['B -> C', 'C -> D'], ['Group1 -> Group1H*']],
       // [event3, event3, event1]
-      [['Group1 -> Group1H*', null], ['Group1 -> Group1H*', null], ['B -> D']],
-      [['Group1 -> Group1H*', null], ['Group1 -> Group1H*', null], ['B -> C', 'C -> D']],
-      [['Group1 -> Group1H*', null], ['Group1 -> Group1H*', null], ['Group1 -> Group1H*', null]],
+      [['Group1 -> Group1H*'], ['Group1 -> Group1H*'], ['B -> D']],
+      [['Group1 -> Group1H*'], ['Group1 -> Group1H*'], ['B -> C', 'C -> D']],
+      [['Group1 -> Group1H*'], ['Group1 -> Group1H*'], ['Group1 -> Group1H*']],
     ];
 
     it('runs the machine as per the graph', function() {
@@ -1034,39 +1037,39 @@ describe('End-to-end graphml to kingly', function () {
       // [event1, event1, event1]
       [['B -> D'], ['D -> D'], null],
       [['B -> D'], ['D -> D'], null],
-      [['B -> D'], ['D -> D'], ['Group1 -> Group1H', null, 'Group1 -> D']],
+      [['B -> D'], ['D -> D'], ['Group1 -> Group1H', 'Group1 -> D']],
       // [event1, event2, event1]
       [['B -> D'], null, ['D -> D']],
       [['B -> D'], null, null],
-      [['B -> D'], null, ['Group1 -> Group1H', null, 'Group1 -> D']],
+      [['B -> D'], null, ['Group1 -> Group1H', 'Group1 -> D']],
       // [event1, event3, event1]
-      [['B -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], null],
-      [['B -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], null],
-      [['B -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], ['Group1 -> Group1H', null, 'Group1 -> D']],
+      [['B -> D'], ['Group1 -> Group1H', 'Group1 -> D'], null],
+      [['B -> D'], ['Group1 -> Group1H', 'Group1 -> D'], null],
+      [['B -> D'], ['Group1 -> Group1H', 'Group1 -> D'], ['Group1 -> Group1H', 'Group1 -> D']],
       // // [event2, event1, event1]
       [['B -> C', 'C -> D'], null, null],
       [['B -> C', 'C -> D'], null, null],
-      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H', null, 'Group1 -> D']],
+      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H', 'Group1 -> D']],
       // // [event2, event2, event1]
       [['B -> C', 'C -> D'], null, null],
       [['B -> C', 'C -> D'], null, null],
-      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H', null, 'Group1 -> D']],
+      [['B -> C', 'C -> D'], null, ['Group1 -> Group1H', 'Group1 -> D']],
       // // [event2, event3, event1]
-      [['B -> C', 'C -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], null],
-      [['B -> C', 'C -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], null],
-      [['B -> C', 'C -> D'], ['Group1 -> Group1H', null, 'Group1 -> D'], ['Group1 -> Group1H', null, 'Group1 -> D']],
+      [['B -> C', 'C -> D'], ['Group1 -> Group1H', 'Group1 -> D'], null],
+      [['B -> C', 'C -> D'], ['Group1 -> Group1H', 'Group1 -> D'], null],
+      [['B -> C', 'C -> D'], ['Group1 -> Group1H', 'Group1 -> D'], ['Group1 -> Group1H', 'Group1 -> D']],
       // // [event3, event1, event1]
-      [['Group1 -> Group1H', null], ['B -> D'], ['D -> D']],
-      [['Group1 -> Group1H', null], ['B -> D'], null],
-      [['Group1 -> Group1H', null], ['B -> D'], ['Group1 -> Group1H', null, 'Group1 -> D']],
+      [['Group1 -> Group1H'], ['B -> D'], ['D -> D']],
+      [['Group1 -> Group1H'], ['B -> D'], null],
+      [['Group1 -> Group1H'], ['B -> D'], ['Group1 -> Group1H', 'Group1 -> D']],
       // // [event3, event2, event1]
-      [['Group1 -> Group1H', null], ['B -> C', 'C -> D'], null],
-      [['Group1 -> Group1H', null], ['B -> C', 'C -> D'], null],
-      [['Group1 -> Group1H', null], ['B -> C', 'C -> D'], ['Group1 -> Group1H', null, 'Group1 -> D']],
+      [['Group1 -> Group1H'], ['B -> C', 'C -> D'], null],
+      [['Group1 -> Group1H'], ['B -> C', 'C -> D'], null],
+      [['Group1 -> Group1H'], ['B -> C', 'C -> D'], ['Group1 -> Group1H', 'Group1 -> D']],
       // // [event3, event3, event1]
-      [['Group1 -> Group1H', null], ['Group1 -> Group1H', null], ['B -> D']],
-      [['Group1 -> Group1H', null], ['Group1 -> Group1H', null], ['B -> C', 'C -> D']],
-      [['Group1 -> Group1H', null], ['Group1 -> Group1H', null], ['Group1 -> Group1H', null]],
+      [['Group1 -> Group1H'], ['Group1 -> Group1H'], ['B -> D']],
+      [['Group1 -> Group1H'], ['Group1 -> Group1H'], ['B -> C', 'C -> D']],
+      [['Group1 -> Group1H'], ['Group1 -> Group1H'], ['Group1 -> Group1H']],
     ];
 
     it('runs the machine as per the graph', function() {
