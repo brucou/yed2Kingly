@@ -10,14 +10,14 @@ This is a case in hand where visual tooling can strengthen part of an error-pron
 This makes yEd a valuable tool to use for state machine creation, edition and maintenance. yEd exists in desktop and online versions. I recommend the desktop version anytime of the day on the grounds that it is more productive for serious tasks, but your mileage may vary. For educational or demonstration purposes, there may be educational value in the online version.
 
 # How does it work?
-In a typical process, I start designing a machine from the specifications by drawing it in the yEd editor. When I am done or ready to test the results of my design, I save the file. yEd by default saves its files in a `.graphml` format. I save the graphml file in the same directory in which I want to use the created state machine. From there, a previously launched watcher runs the `yEd2Kingly` node script on the newly saved file and generates a JavaScript file which exports the events, state hierarchy and transitions contained in the graph -- you can of course also run the script manually instead of using a watcher. The provided exports can then be used as parameters to create a Kingly state machine.
+In a typical process, I start designing a machine from the specifications by drawing it in the yEd editor. When I am done or ready to test the results of my design, I save the file. yEd by default saves its files in a `.graphml` format. I save the graphml file in the same directory in which I want to use the created state machine. From there, a previously launched watcher runs the `yed2kingly` node script on the newly saved file and generates a JavaScript file which exports the events, state hierarchy and transitions contained in the graph -- you can of course also run the script manually instead of using a watcher. The provided exports can then be used as parameters to create a Kingly state machine.
 
 # Install
-`npm install yEd2Kingly`
+`npm install yed2kingly`
 
 # Usage
 ```bash
-yEd2Kingly file.graphml
+mode ${yed2kingly filepath}/index.js file.graphml
 ```
 
 Running the converter produces two files, targeted at consumption in a browser and node.js environment:
@@ -44,7 +44,7 @@ Some definitions:
   - A history pseudo-state is a node whose label is H (shallow history) or H* (deep history)
   - A compound node is a node which is created in the yEd interface by using the group functionality (*Grouping > Group* or *Ctrl-Alt-G* in version 3.19).
 
-- yEd2Kingly rules:
+- yed2kingly rules:
   - With the exception of history and init pseudo-states, all nodes are converted to Kingly states
   - The Kingly name for a compound state will be the label displayed in the yEd editor for then matching group nodes in a non-collapsed state. This is important as yEd has another name for group node in collapsed state.
   - The label for any edge in the graph maps to a Kingly transition record. The chosen syntax is `event [guard] / action`. Anyone of the event, guard and action can be empty. Hence `[]/` is a valid syntax though not recommended.
