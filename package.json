@@ -1,6 +1,6 @@
 {
   "name": "yed2kingly",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "author": "brucou",
   "description": "Supports the conversion of graphs drawn with the yed editor into Kingly state machines",
   "devDependencies": {
@@ -8,13 +8,17 @@
     "chai": "^4.2.0",
     "mocha": "^7.1.1"
   },
+  "bin": {
+    "@brucou/yed2kingly": "bin/yed2kingly",
+    "yed2kingly": "bin/yed2kingly"
+  },
   "dependencies": {
     "commander": "^5.0.0",
-    "fs": "latest",
-    "prettier": "^2.0.4",
     "fast-xml-parser": "^3.16.0",
     "fp-rosetree": "0.6.2",
+    "fs": "latest",
     "kingly": "^0.26.0",
+    "prettier": "^2.0.4",
     "ramda": "^0.27.0"
   },
   "prettier": {
