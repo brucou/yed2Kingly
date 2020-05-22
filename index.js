@@ -9,7 +9,7 @@ module.exports = function slim(argv) {
   const {Command} = require('commander');
   const {computeTransitionsAndStatesFromXmlString} = require('./conversion');
   const {checkKinglyContracts} = require('./helpers');
-  const {DEFAULT_ACTION_FACTORY_STR} = require('./properties')
+  const {DEFAULT_ACTION_FACTORY_STR} = require('./properties');
   const program = new Command();
 
 // Configure syntax, parse and run
@@ -25,7 +25,7 @@ module.exports = function slim(argv) {
 // NTH: handle several files at the same time
 // NTH: add an output option
   function convertYedFile(_file) {
-    const file = _file.endsWith('.graphml') ? _file : `${file}.graphml`;
+    const file = _file.endsWith('.graphml') ? _file : `${_file}.graphml`;
 
     // Read the file
     try {
