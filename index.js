@@ -1,4 +1,4 @@
-module.exports = function slim(argv) {
+module.exports = function convert(argv) {
   const {ACTION_IDENTITY, NO_OUTPUT, NO_STATE_UPDATE, fsmContracts} = require('kingly');
 // This one is from jest and is terrific to format object nicely
 // but we used JSON.stringify in the end as we need JS-legit formatting here
