@@ -257,6 +257,10 @@ function displayTransitionJSON(t) {
 const f = (a, b) => [].concat(...a.map(d => b.map(e => [].concat(d, e))));
 const cartesian = (a, b, ...c) => (b ? cartesian(f(a, b), ...c) : a);
 
+function trimInside(str) {
+  return str.replace(/\n/gm, ' ').replace(/\r/gm, ' ').replace(/\s+/g, " ");
+}
+
 module.exports = {
   T,
   tryCatchFactory,
@@ -283,4 +287,5 @@ module.exports = {
   fakeConsole,
   contains,
   displayTransitionJSON,
+  trimInside,
 }

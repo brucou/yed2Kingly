@@ -22,8 +22,8 @@ function contains(as, bs) {
 }
 var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
-var events = ["navigated to url", "typed", "clicked submit"];
-var states = { n1ღdone: "", n2ღstrong: "", n3ღweak: "" };
+var events = ["start", "typed", "clicked submit"];
+var states = { n1ღdone: "", n2ღstrong: "", n3ღweak: "", n4ღidle: "" };
 function getKinglyTransitions(record) {
   var aF = record.actionFactories;
   var guards = record.guards;
@@ -32,6 +32,7 @@ function getKinglyTransitions(record) {
     "display weak password screen",
     "display strong password screen",
     "display password submitted screen",
+    "ACTION_IDENTITY",
   ];
   var predicateList = ["!letter and numbers?", "letter and numbers?"];
   aF["ACTION_IDENTITY"] = function ACTION_IDENTITY() {
@@ -49,7 +50,7 @@ function getKinglyTransitions(record) {
     throw new Error("Some guards are missing either in the graph, or in the guard implementation object!");
   }
   const transitions = [
-    { from: "nok", event: "init", to: "n3ღweak", action: aF["display initial screen"] },
+    { from: "n4ღidle", event: "start", to: "n3ღweak", action: aF["display initial screen"] },
     {
       from: "n3ღweak",
       event: "typed",
@@ -67,6 +68,7 @@ function getKinglyTransitions(record) {
       ],
     },
     { from: "n2ღstrong", event: "clicked submit", to: "n1ღdone", action: aF["display password submitted screen"] },
+    { from: "nok", event: "init", to: "n4ღidle", action: aF["ACTION_IDENTITY"] },
   ];
 
   return transitions;
