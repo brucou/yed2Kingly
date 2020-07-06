@@ -1,7 +1,8 @@
 const {INIT_STATE, INIT_EVENT} = require('kingly');
 const {mapOverTree} = require('fp-rosetree');
-const {lensPath, view, mergeAll, concat, forEachObjIndexed, find} = require('ramda');
+const {lensPath, view, mergeAll, concat, forEachObjIndexed, find, difference} = require('ramda');
 const nearley = require("nearley");
+const prettyFormat = require("pretty-format");
 const yedEdgeLabelGrammar = require("./yedEdgeLabelGrammar.js");
 const {
   handleAggregateEdgesPerFromEventKeyErrors,
@@ -88,8 +89,11 @@ const stateYed2KinglyLens = {
   constructTree: constructStateYed2KinglyMap,
 };
 
-// NTH: implement rules
-// Only ever one [x]
+/**
+ *
+ * @param {String} _yedEdgeLabel cf. grammar.
+ * @returns {{actionFactory: Array, event: String, guard: Array}[]} `actionFactory` and `guard` are arrays of action strings. For instance, "... / do this, do that" => actionFactory = ["do this", "do that"]
+ */
 function parseYedLabel(_yedEdgeLabel) {
 // Parser for parsing edge labels
   // It is a stateful object, so needs to be recreated every time
@@ -106,6 +110,7 @@ function parseYedLabel(_yedEdgeLabel) {
   // 2. mono-transition label
   let arrTransitions = [];
   const results = parser.results[0];
+  // console.warn(`results`, results)
   if (Array.isArray(results)){
     arrTransitions = arrTransitions.concat(results);
   }
@@ -114,33 +119,36 @@ function parseYedLabel(_yedEdgeLabel) {
       arrTransitions.push(results);
     }
     else {
-      arrTransitions.push({event: "", guard: "", actions: ""});
+      arrTransitions.push({event: "", guard: [], actions: []});
     }
   }
 
   return arrTransitions.map(transitionRecord => {
+    // console.warn(`transitionRecord `, transitionRecord)
     const {event, guard, actions} = transitionRecord;
+
     return {
-      actionFactory: actions.trim() || DEFAULT_ACTION_FACTORY_STR,
+      actionFactory: actions.map(action => action.trim()),
       event: event.trim(),
-      guard: guard.trim()
+      guard: guard.map(guard => guard.trim())
     }
   })
 }
 
-function aggregateEdgesPerFromEventKey({edges: hashMap, events}, yedEdge) {
+function aggregateEdgesPerFromEventKey(acc, yedEdge) {
+  const {edges: hashMap, events} = acc;
   const from = view(lensPath(['@_source']), yedEdge).trim();
   const to = view(lensPath(['@_target']), yedEdge).trim();
   const yedEdgeLabel = getYedEdgeLabel(yedEdge);
-  const  transitionsRecords = parseYedLabel(yedEdgeLabel);
 
+  const  transitionsRecords = parseYedLabel(yedEdgeLabel);
   transitionsRecords.forEach(transitionsRecord => {
     const {actionFactory, event, guard} = transitionsRecord;
     const fromEventKey = [from, event].join(SEP);
 
     hashMap[fromEventKey] = hashMap[fromEventKey] || [];
     hashMap[fromEventKey] = hashMap[fromEventKey].concat([
-      {predicate: guard.trim(), to: to.trim(), actionFactory: actionFactory.trim()},
+      {predicate: guard.map(g => g.trim()), to: to.trim(), actionFactory: actionFactory.map(af => af.trim())},
     ]);
     if (event) events.add(event)
   });
@@ -151,12 +159,13 @@ function aggregateEdgesPerFromEventKey({edges: hashMap, events}, yedEdge) {
 /**
  * @modifies {errors}
  * @param {Array} errors
- * @param actionFactories
- * @param guards
- * @param edges
+ * @param actionFactories actions passed by the API user
+ * @param guards guards passed by the API user
+ * @param Array<{{arrGuardsTargetActions, fromEventKey}}> edges
  * @returns {Array} Array contains found errors, empty is no error found
  */
 function checkForMissingFunctions(errors, {actionFactories, guards}, edges) {
+  // TODO: that could be refactored with applicative validation?
   forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
     const [yedFrom, _event] = fromEventKey.split(SEP);
     // Anything but empty string is a valid state name
@@ -178,12 +187,16 @@ function checkForMissingFunctions(errors, {actionFactories, guards}, edges) {
     });
 
     arrGuardsTargetActions.every(guardsTargetActionRecord => {
-      const {predicate: _predicateStr, to: yedTo, actionFactory: _actionFactoryStr} = guardsTargetActionRecord;
-      const predicateStr = _predicateStr.trim();
-      const actionFactoryStr = _actionFactoryStr.trim();
-      // We do not check that it is a function here to allow a string for testing purposes
-      const isGuardPassed = !predicateStr || guards && guards[predicateStr];
-      const isActionPassed = !actionFactoryStr || actionFactories[actionFactoryStr];
+      // We do not check that guards and actions are functions, we want to allow for strings
+      const {predicate: _predicateList, to: yedTo, actionFactory: _actionFactoryList} = guardsTargetActionRecord;
+      const providedGuards = Object.keys(guards);
+      const expectedGuards = _predicateList.map(p => p.trim());
+      const providedActions = Object.keys(actionFactories);
+      const expectedActions = _actionFactoryList.map(af => af.trim());
+      const notNeededGuards = difference(providedGuards, expectedGuards);
+      const missingGuards = difference(expectedGuards, providedGuards);
+      const notNeededActions = difference(providedActions, expectedActions);
+      const missingActions = difference(expectedActions, providedActions);
 
       if (!isValidStateName(yedTo)) errors.push({
         when: `Checking that the name of the states figuring in the graph are valid`,
@@ -191,17 +204,29 @@ function checkForMissingFunctions(errors, {actionFactories, guards}, edges) {
         message: `Yed graph file mentions an invalid state |${yedTo}|!`,
         info: {state: yedTo}
       });
-      if (!isGuardPassed) errors.push({
+      if (notNeededGuards.length>0) errors.push({
         when: `Checking that the transitions figuring in the graph can be mapped to functions implementing them`,
         location: `checkForMissingFunctions > getKinglyTransitions`,
-        message: `Yed graph file mentions a guard named |${predicateStr}|. I could not find the implementation of that guard in the parameter |guards| passed!`,
-        info: {guards}
+        message: `I found guards passed as parameters that do not match to a guard in the yed graph! Please remove them!`,
+        info: {notNeededGuards, guards, expectedGuards}
       })
-      if (!isActionPassed) errors.push({
+      if (missingGuards.length>0) errors.push({
         when: `Checking that the transitions figuring in the graph can be mapped to functions implementing them`,
         location: `checkForMissingFunctions > getKinglyTransitions`,
-        message: `Yed graph file mentions an action factory named |${actionFactoryStr}|. I could not find the implementation of that action factory in the parameter |actionFactories| passed!`,
-        info: {actionFactories}
+        message: `I found guards in the yed graph that cannot be matched to a JavaScript function! Please review the JavaScript guards that you passed.`,
+        info: {missingGuards, guards, expectedGuards}
+      })
+      if (notNeededActions.length>0) errors.push({
+        when: `Checking that the transitions figuring in the graph can be mapped to functions implementing them`,
+        location: `checkForMissingFunctions > getKinglyTransitions`,
+        message: `I found actions passed as parameters that do not match to an action in the yed graph! Please remove them!`,
+        info: {notNeededActions, actionFactories, expectedActions}
+      })
+      if (missingActions.length>0) errors.push({
+        when: `Checking that the transitions figuring in the graph can be mapped to functions implementing them`,
+        location: `checkForMissingFunctions > getKinglyTransitions`,
+        message: `I found actions in the yed graph that cannot be matched to a JavaScript function! Please review the JavaScript actions that you passed.`,
+        info: {missingActions, actionFactories, expectedActions}
       })
     });
   }, edges);
@@ -226,6 +251,7 @@ function computeKinglyTransitionsFactory(stateYed2KinglyMap, edges, injected) {
 
     let transitions = [];
     forEachObjIndexed((arrGuardsTargetActions, fromEventKey) => {
+      // console.warn(`arrGuardsTargetActions`, arrGuardsTargetActions)
       // Example:
       // yedFrom: "n0::n0" ; userFrom: "entered by user" ; _from: "n0::n0[symbol]entered by user"
       const [yedFrom, _event] = fromEventKey.split(SEP);

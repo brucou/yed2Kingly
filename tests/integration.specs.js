@@ -2,10 +2,11 @@
 // check that the obtained Kingly graph works as it should
 
 const {INIT_EVENT, INIT_STATE, NO_OUTPUT, createStateMachine, fsmContracts} = require('kingly');
+const prettyFormat = require('pretty-format');
 const assert = require('assert');
 const graphs = require('./graphs.fixtures');
 const {computeTransitionsAndStatesFromXmlString} = require('../conversion');
-const {formatResult, cartesian, displayTransitionJSON} = require('../helpers');
+const {fakeConsole, formatResult, cartesian, displayTransitionJSON} = require('../helpers');
 // Use a simple merge to update extended state, that's enough for tests
 // but then updates must be an object, not an array
 const updateState = (extendedState, updates) => Object.assign({}, extendedState, updates);
@@ -23,8 +24,9 @@ describe('Conversion yed to kingly', function () {
     no_hierarchy_events_eventless,
     top_level_conditional_init_with_hierarchy,
     deep_hierarchy_history_H,
+    test_yed_conversion,
   } = graphs;
-  const settings = {debug: {console}};
+  const settings = {debug: {fakeConsole}};
   const event1 = {event1: void 0};
   const event2 = {event2: void 0};
   const event3 = {event3: void 0};
@@ -1066,5 +1068,286 @@ describe('Conversion yed to kingly', function () {
       );
       assert.deepEqual(outputs1, expected1, `Branch machine initialized with number ok`);
     });
+  });
+});
+
+describe('Conversion yed to kingly - several transitions per edge, concatenated actions', function() {
+  const {
+    counter,
+  } = graphs;
+  const settings = {};
+  // const settings = {debug: {fakeConsole}};
+
+  describe('counter-inc-dec - guards pass', function() {
+    // Should be exactly the same as the hierarchy_history_H case
+    const {
+      getKinglyTransitions,
+      stateYed2KinglyMap,
+      states,
+      events,
+      errors,
+    } = computeTransitionsAndStatesFromXmlString(counter);
+    // Build the machine
+    const guards = {
+      "is it": (s, e, stg) => true,
+      "is it not": (s, e, stg) => true,
+    };
+    const actionFactories = {
+      "increment counter": (s, e, stg) => ({updates: [+1], outputs:[s+1]}),
+      "decrement counter": (s, e, stg) => ({updates: [-1], outputs:[s-1]}),
+      "render": (s, e, stg) => ({updates: [], outputs:[`rendered`]}),
+      "render some more": (s, e, stg) => ({updates: [], outputs:[]}),
+    };
+
+    const event1 = {"click inc": void 0};
+    const event2 = {"click dec": void 0};
+    const eventSpace = [event1, event2, {dummy:0}];
+
+    const fsmDef1 = {
+      updateState: (s, u) => {
+        return u.reduce((a,b) => a+b, s)
+      },
+      initialExtendedState: 0,
+      events,
+      states,
+      transitions: getKinglyTransitions({actionFactories, guards}).transitions,
+    };
+
+    const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
+    const cases = inputSpace.map(scenario => {
+      return [eventSpace[scenario[0]], eventSpace[scenario[1]], eventSpace[scenario[2]]];
+    });
+    const expected1 = [
+      // [event1, event1, event1]
+      [[1, "rendered"], [2, "rendered"], [3, "rendered"]],
+      [[1, "rendered"], [2, "rendered"], [1, "rendered"]],
+      [[1, "rendered"], [2, "rendered"], null],
+      // [event1, event2, event1]
+      [[1, "rendered"], [0, "rendered"], [1, "rendered"]],
+      [[1, "rendered"], [0, "rendered"], [-1, "rendered"]],
+      [[1, "rendered"], [0, "rendered"], null],
+      // // [event1, event3, event1]
+      [[1, "rendered"], null, [2, "rendered"]],
+      [[1, "rendered"], null, [0, "rendered"]],
+      [[1, "rendered"], null, null],
+      // // [event2, event1, event1]
+      [[-1, "rendered"], [0, "rendered"], [1, "rendered"]],
+      [[-1, "rendered"], [0, "rendered"], [-1, "rendered"]],
+      [[-1, "rendered"], [0, "rendered"], null],
+      // // [event2, event2, event1]
+      [[-1, "rendered"], [-2, "rendered"], [-1, "rendered"]],
+      [[-1, "rendered"], [-2, "rendered"], [-3, "rendered"]],
+      [[-1, "rendered"], [-2, "rendered"], null],
+      // // [event2, event3, event1]
+      [[-1, "rendered"], null, [0, "rendered"]],
+      [[-1, "rendered"], null, [-2, "rendered"]],
+      [[-1, "rendered"], null, null],
+      // // [event3, event1, event1]
+      [null, [1, "rendered"], [2, "rendered"]],
+      [null, [1, "rendered"], [0, "rendered"]],
+      [null, [1, "rendered"], null],
+      // // [event3, event2, event1]
+      [null, [-1, "rendered"], [0, "rendered"]],
+      [null, [-1, "rendered"], [-2, "rendered"]],
+      [null, [-1, "rendered"], null],
+      // // [event3, event3, event1]
+      [null, null, [1, "rendered"]],
+      [null, null, [-1, "rendered"]],
+      [null, null, null],
+    ];
+
+    it('runs the machine as per the graph', function() {
+      cases.forEach((scenario, index) => {
+        // Allows to pick some specific index for easier debugging
+        // if (index > 20) return
+        const fsm = createStateMachine(fsmDef1, settings);
+        const outputs = scenario.map(fsm);
+        assert.deepEqual(outputs, expected1[index], prettyFormat(scenario));
+      });
+    });
+
+
+  });
+
+  describe('counter-inc-dec - first guard fail', function() {
+    // Should be exactly the same as the hierarchy_history_H case
+    const {
+      getKinglyTransitions,
+      stateYed2KinglyMap,
+      states,
+      events,
+      errors,
+    } = computeTransitionsAndStatesFromXmlString(counter);
+    // Build the machine
+    const guards = {
+      "is it": (s, e, stg) => false,
+      "is it not": (s, e, stg) => true,
+    };
+    const actionFactories = {
+      "increment counter": (s, e, stg) => ({updates: [+1], outputs:[s+1]}),
+      "decrement counter": (s, e, stg) => ({updates: [-1], outputs:[s-1]}),
+      "render": (s, e, stg) => ({updates: [], outputs:[`rendered`]}),
+      "render some more": (s, e, stg) => ({updates: [], outputs:[]}),
+    };
+
+    const event1 = {"click inc": void 0};
+    const event2 = {"click dec": void 0};
+    const eventSpace = [event1, event2, {dummy:0}];
+
+    const fsmDef1 = {
+      updateState: (s, u) => {
+        return u.reduce((a,b) => a+b, s)
+      },
+      initialExtendedState: 0,
+      events,
+      states,
+      transitions: getKinglyTransitions({actionFactories, guards}).transitions,
+    };
+
+    const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
+    const cases = inputSpace.map(scenario => {
+      return [eventSpace[scenario[0]], eventSpace[scenario[1]], eventSpace[scenario[2]]];
+    });
+    const expected1 = [
+      // [event1, event1, event1]
+      [[null], [null], [null]],
+      [[null], [null], [-1, "rendered"]],
+      [[null], [null], null],
+      // [event1, event2, event1]
+      [[null], [-1, "rendered"], [null]],
+      [[null], [-1, "rendered"], [-2, "rendered"]],
+      [[null], [-1, "rendered"], null],
+      // // [event1, event3, event1]
+      [[null], null, [null]],
+      [[null], null, [-1, "rendered"]],
+      [[null], null, null],
+      // // [event2, event1, event1]
+      [[-1, "rendered"], [null], [null]],
+      [[-1, "rendered"], [null], [-2, "rendered"]],
+      [[-1, "rendered"], [null], null],
+      // // [event2, event2, event1]
+      [[-1, "rendered"], [-2, "rendered"], [null]],
+      [[-1, "rendered"], [-2, "rendered"], [-3, "rendered"]],
+      [[-1, "rendered"], [-2, "rendered"], null],
+      // // [event2, event3, event1]
+      [[-1, "rendered"], null, [null]],
+      [[-1, "rendered"], null, [-2, "rendered"]],
+      [[-1, "rendered"], null, null],
+      // // [event3, event1, event1]
+      [null, [null], [null]],
+      [null, [null], [-1, "rendered"]],
+      [null, [null], null],
+      // // [event3, event2, event1]
+      [null, [-1, "rendered"], [null]],
+      [null, [-1, "rendered"], [-2, "rendered"]],
+      [null, [-1, "rendered"], null],
+      // // [event3, event3, event1]
+      [null, null, [null]],
+      [null, null, [-1, "rendered"]],
+      [null, null, null],
+    ];
+
+    it('runs the machine as per the graph', function() {
+      cases.forEach((scenario, index) => {
+        // Allows to pick some specific index for easier debugging
+        // if (index > 20) return
+        const fsm = createStateMachine(fsmDef1, settings);
+        const outputs = scenario.map(fsm);
+        assert.deepEqual(outputs, expected1[index], prettyFormat(scenario));
+      });
+    });
+
+
+  });
+
+  describe('counter-inc-dec - second guard fail', function() {
+    // Should be exactly the same as the hierarchy_history_H case
+    const {
+      getKinglyTransitions,
+      stateYed2KinglyMap,
+      states,
+      events,
+      errors,
+    } = computeTransitionsAndStatesFromXmlString(counter);
+    // Build the machine
+    const guards = {
+      "is it": (s, e, stg) => true,
+      "is it not": (s, e, stg) => false,
+    };
+    const actionFactories = {
+      "increment counter": (s, e, stg) => ({updates: [+1], outputs:[s+1]}),
+      "decrement counter": (s, e, stg) => ({updates: [-1], outputs:[s-1]}),
+      "render": (s, e, stg) => ({updates: [], outputs:[`rendered`]}),
+      "render some more": (s, e, stg) => ({updates: [], outputs:[]}),
+    };
+
+    const event1 = {"click inc": void 0};
+    const event2 = {"click dec": void 0};
+    const eventSpace = [event1, event2, {dummy:0}];
+
+    const fsmDef1 = {
+      updateState: (s, u) => {
+        return u.reduce((a,b) => a+b, s)
+      },
+      initialExtendedState: 0,
+      events,
+      states,
+      transitions: getKinglyTransitions({actionFactories, guards}).transitions,
+    };
+
+    const inputSpace = cartesian([0, 1, 2], [0, 1, 2], [0, 1, 2]);
+    const cases = inputSpace.map(scenario => {
+      return [eventSpace[scenario[0]], eventSpace[scenario[1]], eventSpace[scenario[2]]];
+    });
+    const expected1 = [
+      // [event1, event1, event1]
+      [[null], [null], [null]],
+      [[null], [null], [-1, "rendered"]],
+      [[null], [null], null],
+      // [event1, event2, event1]
+      [[null], [-1, "rendered"], [null]],
+      [[null], [-1, "rendered"], [-2, "rendered"]],
+      [[null], [-1, "rendered"], null],
+      // // [event1, event3, event1]
+      [[null], null, [null]],
+      [[null], null, [-1, "rendered"]],
+      [[null], null, null],
+      // // [event2, event1, event1]
+      [[-1, "rendered"], [null], [null]],
+      [[-1, "rendered"], [null], [-2, "rendered"]],
+      [[-1, "rendered"], [null], null],
+      // // [event2, event2, event1]
+      [[-1, "rendered"], [-2, "rendered"], [null]],
+      [[-1, "rendered"], [-2, "rendered"], [-3, "rendered"]],
+      [[-1, "rendered"], [-2, "rendered"], null],
+      // // [event2, event3, event1]
+      [[-1, "rendered"], null, [null]],
+      [[-1, "rendered"], null, [-2, "rendered"]],
+      [[-1, "rendered"], null, null],
+      // // [event3, event1, event1]
+      [null, [null], [null]],
+      [null, [null], [-1, "rendered"]],
+      [null, [null], null],
+      // // [event3, event2, event1]
+      [null, [-1, "rendered"], [null]],
+      [null, [-1, "rendered"], [-2, "rendered"]],
+      [null, [-1, "rendered"], null],
+      // // [event3, event3, event1]
+      [null, null, [null]],
+      [null, null, [-1, "rendered"]],
+      [null, null, null],
+    ];
+
+    it('runs the machine as per the graph', function() {
+      cases.forEach((scenario, index) => {
+        // Allows to pick some specific index for easier debugging
+        // if (index > 20) return
+        const fsm = createStateMachine(fsmDef1, settings);
+        const outputs = scenario.map(fsm);
+        assert.deepEqual(outputs, expected1[index], prettyFormat(scenario));
+      });
+    });
+
+
   });
 });

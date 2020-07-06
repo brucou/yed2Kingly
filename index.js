@@ -5,11 +5,13 @@ module.exports = function convert(argv) {
 // Kept here because I never remember the name of the module
 // const prettyFormat = require('pretty-format');
   const prettier = require("prettier");
+  const prettyFormat = require("pretty-format");
   const fs = require('fs');
   const {Command} = require('commander');
   const {computeTransitionsAndStatesFromXmlString} = require('./conversion');
   const {checkKinglyContracts} = require('./helpers');
   const {DEFAULT_ACTION_FACTORY_STR} = require('./properties');
+  const {implDoStr, implEveryStr} = require('./template');
   const program = new Command();
 
 // Configure syntax, parse and run
@@ -18,6 +20,10 @@ module.exports = function convert(argv) {
     .arguments('<file>')
     .action(convertYedFile);
   program.parse(process.argv);
+
+  function hasGuards(guards){
+    return guards.length > 1 || guards.length === 1 && guards[0].predicate.map(p => p.slice(3, -3)).filter(Boolean).length > 0
+  }
 
 // Conversion function
 // DOC: We export two files: one cjs for node.js and js for browser esm consumption
@@ -55,36 +61,41 @@ module.exports = function convert(argv) {
 
         // Stringify the transitions without guards and actions (we just have the names of such)
         // to hold the guards and actions
+        // TODO: refactor that somewhere else
         let predicateList = new Set();
         let actionList = new Set();
         const transitionsStr = transitionsWithoutGuardsActions.map(transitionRecord => {
-          if (transitionRecord.guards) {
-            const {from, event, guards} = transitionRecord;
+          const {from, event, guards} = transitionRecord;
+          // console.warn(`transitionsWithoutGuardsActions > transitionRecord `, prettyFormat(transitionRecord));
+
+          if (guards.length === 0) throw `Got guards record that is empty array! We have a bug here!`
+         if (hasGuards(guards) ) {
             return `
            { from: "${from}", event: "${event}", guards: [
            ${guards.map(guardRecord => {
               const {predicate, to, action} = guardRecord;
-              const predicateStr = predicate.slice(3, -3);
-              const actionStr = action.slice(3, -3);
-              predicateList.add(predicateStr);
-              actionList.add(actionStr);
-              // actionList.push(actionStr);
+              const predicates = predicate.map(x => x.slice(3, -3)).filter(Boolean);
+              const actions = action.map(x => x.slice(3, -3)).filter(Boolean);
+              predicates.forEach(x => predicateList.add(x));
+              actions.forEach(x => actionList.add(x));
 
               return `
-          {predicate: guards["${predicateStr}"], to: ${JSON.stringify(to)}, action: aF["${actionStr}"]}, 
-          `.trim()
+          {predicate: every(${JSON.stringify(predicates)}, guards), to: ${JSON.stringify(to)}, action: chain(${JSON.stringify(actions)}, aF)} 
+          `.trim().concat(", ")
             }).join("\n")
               }
       ]}
         `.trim().concat(", ")
           }
           else {
-            const {from, event, to, action} = transitionRecord;
-            const actionStr = action.slice(3, -3);
-            actionList.add(actionStr);
+           const {predicate, to, action} = guards[0];
+           const predicates = predicate.map(x => x.slice(3, -3)).filter(Boolean);
+           const actions = action.map(x => x.slice(3, -3)).filter(Boolean);
+           predicates.forEach(x => predicateList.add(x));
+           actions.forEach(x => actionList.add(x));
 
             return `
-          { from: "${from}", event: "${event}", to: ${JSON.stringify(to)}, action: aF["${actionStr}"] } 
+          { from: "${from}", event: "${event}", to: ${JSON.stringify(to)}, action: chain(${JSON.stringify(actions)}, aF)}
         `.trim().concat(", ")
           }
         }).join("\n");
@@ -98,11 +109,24 @@ module.exports = function convert(argv) {
       // Using natural language sentences for labels in the graph is valid
       // guard and action functions name still follow JavaScript rules though
       // -----Guards------
+      /**
+      * @param {E} extendedState
+      * @param {D} eventData
+      * @param {X} settings
+      * @returns Boolean
+      */
       // const guards = {${Array.from(predicateList)
           .map(pred => `\n//   "${pred}": function (){},`)
           .join("")}
       // };
       // -----Actions------
+      /**
+      * @param {E} extendedState
+      * @param {D} eventData
+      * @param {X} settings
+      * @returns {{updates: U[], outputs: O[]}}
+      * (such that updateState:: E -> U[] -> E)
+      */
       // const actions = {${Array.from(actionList)
           .map(action => action !== DEFAULT_ACTION_FACTORY_STR
             ? `\n//   "${action}": function (){},`
@@ -113,6 +137,11 @@ module.exports = function convert(argv) {
          function contains(as, bs){
            return as.every(function(a){return bs.indexOf(a) > -1} )
          }
+         
+         ${implDoStr}
+         
+         ${implEveryStr}
+         
          var NO_OUTPUT = ${JSON.stringify(NO_OUTPUT)};
          var NO_STATE_UPDATE = ${JSON.stringify(NO_STATE_UPDATE)};
          var events = ${JSON.stringify(events)};
@@ -122,12 +151,17 @@ module.exports = function convert(argv) {
          var guards = record.guards
          var actionList = ${JSON.stringify(Array.from(actionList))};
          var predicateList = ${JSON.stringify(Array.from(predicateList))};
-         aF['ACTION_IDENTITY'] = ${ACTION_IDENTITY}; 
            if (!contains(actionList, Object.keys(aF))) {
+             console.error("Some actions are missing either in the graph, or in the action implementation object! Cf actionFactories (you passed that) vs. actionList (from the graph) below. They must have the same items!");
              console.error({actionFactories: Object.keys(aF), actionList});
-             throw new Error("Some action are missing either in the graph, or in the action implementation object!")
+             var passedAndMissingInGraph = Object.keys(aF).filter(function(k) { return actionList.indexOf(k) === -1});
+             passedAndMissingInGraph.length > 0 && console.error("So the following actions were passed in parameters but do not match any action in the graph! This may happen if you modified the name of an action in the graph, but kept using the older name in the implementation! Please check.", passedAndMissingInGraph);
+             var inGraphButNotImplemented= actionList.filter(function(k) { return  Object.keys(aF).indexOf(k) === -1});
+             inGraphButNotImplemented.length > 0 && console.error("So the following actions declared in the graph are not implemented! Please add the implementation. You can have a look at the comments of the generated fsm file for typing information.", inGraphButNotImplemented);
+             throw new Error("Some actions implementations are missing either in the graph, or in the action implementation object!")
            }
            if (!contains(predicateList, Object.keys(guards))) {
+             console.error("Some guards are missing either in the graph, or in the action implementation object! Cf guards (you passed that) vs. predicateList (from the graph) below. They must have the same items!");
              console.error({guards: Object.keys(guards), predicateList});
              throw new Error("Some guards are missing either in the graph, or in the guard implementation object!")
            }
@@ -137,13 +171,34 @@ module.exports = function convert(argv) {
            
            return transitions
          }
+         
+function createStateMachineFromGraph(fsmDefForCompile, settings){
+  var updateState = fsmDefForCompile.updateState;
+  var initialExtendedState = fsmDefForCompile.initialExtendedState;
+
+  var transitions = getKinglyTransitions({actionFactories: fsmDefForCompile.actionFactories, guards: fsmDefForCompile.guards});
+
+  var fsm = createStateMachine({
+    updateState,
+    initialExtendedState,
+    states,
+    events,
+    transitions
+  }, settings);
+
+  return fsm
+}
+
          `.trim();
 
+        const cjsImports = `var createStateMachine = require("kingly").createStateMachine;`
+        const esmImports = `import {createStateMachine} from "kingly";`;
         const esmExports = `
          export {
            events,
            states,
-           getKinglyTransitions
+           getKinglyTransitions,
+           createStateMachineFromGraph
          }
 `.trim();
 
@@ -151,12 +206,13 @@ module.exports = function convert(argv) {
          module.exports = {
            events,
            states,
-           getKinglyTransitions
+           getKinglyTransitions,
+           createStateMachineFromGraph
          }
 `.trim();
 
         // Write the esm output file
-        const esmContents = [fileContents, esmExports].join("\n\n");
+        const esmContents = [esmImports, fileContents, esmExports].join("\n\n");
         try {
           const prettyFileContents = prettier.format(esmContents, {semi: true, parser: "babel", printWidth: 120});
           fs.writeFileSync(`${file}.fsm.js`, prettyFileContents)
@@ -168,7 +224,7 @@ module.exports = function convert(argv) {
         }
 
         // Write the cjs output filee
-        const cjsContents = [fileContents, cjsExports].join("\n\n");
+        const cjsContents = [cjsImports, fileContents, cjsExports].join("\n\n");
         try {
           const prettyFileContents = prettier.format(cjsContents, {semi: true, parser: "babel", printWidth: 120});
           fs.writeFileSync(`${file}.fsm.cjs`, prettyFileContents)

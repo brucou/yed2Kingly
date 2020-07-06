@@ -75,3 +75,11 @@ function getKinglyTransitions(record) {
 }
 
 export { events, states, getKinglyTransitions };
+export { createStateMachine };
+
+function createStateMachine(fsmDefForCompile, settings){
+  var actions = fsmDefForCompile.actionFactories;
+  var guards = fsmDefForCompile.guards;
+  var updateState = fsmDefForCompile.updateState;
+  var initialExtendedState = fsmDefForCompile.initialExtendedState;
+}

@@ -125,18 +125,17 @@ function computeKinglyDestinationState(stateYed2KinglyMap, yedTo) {
   }
 }
 
-function mapActionFactoryStrToActionFactoryFn(actionFactories, actionFactoryStr) {
-  return actionFactoryStr === DEFAULT_ACTION_FACTORY_STR
-    ? DEFAULT_ACTION_FACTORY
-    : actionFactories[actionFactoryStr]
+function mapActionFactoryStrToActionFactoryFn(actionFactories, actionFactoryArr) {
+  console.warn(`mapActionFactoryStrToActionFactoryFn`, actionFactoryArr)
+  return chain(actionFactoryArr.filter(Boolean), actionFactories)
 }
 
-function mapGuardStrToGuardFn(guards, predicateStr) {
-  return guards[predicateStr] || T
+function mapGuardStrToGuardFn(guards, predicateArr) {
+  return every(predicateArr.filter(Boolean), guards)
 }
 
-function markFunctionStr(_, str){
-  return ["", "", "", str, "", "", ""].join(SEP)
+function markArrayFunctionStr(_, arr){
+  return arr.map(str => ['', '', '', str, '', '', ''].join(SEP));
 }
 
 function markFunctionNoop(_, str){
@@ -261,6 +260,34 @@ function trimInside(str) {
   return str.replace(/\n/gm, ' ').replace(/\r/gm, ' ').replace(/\s+/g, " ");
 }
 
+function chain(arrFns, actions) {
+  return function chain_(s, ed, stg) {
+    return (
+      arrFns.reduce(function(acc, fn) {
+        console.warn(`chain_`, fn)
+        var r = actions[fn](s, ed, stg);
+
+        return {
+          updates: acc.updates.concat(r.updates),
+          outputs: acc.outputs.concat(r.outputs),
+        };
+      }, { updates: [], outputs: [] })
+    );
+  };
+}
+
+function every(arrFns, guards) {
+  return function every_(s, ed, stg) {
+    return (
+      arrFns.reduce(function(acc, fn) {
+        var r = guards[fn](s, ed, stg);
+
+        return r && acc;
+      }, true)
+    );
+  };
+}
+
 module.exports = {
   T,
   tryCatchFactory,
@@ -280,7 +307,7 @@ module.exports = {
   parseGraphMlString,
   formatResult,
   cartesian,
-  markFunctionStr,
+  markFunctionStr: markArrayFunctionStr,
   markFunctionNoop,
   markGuardNoop,
   checkKinglyContracts,
@@ -288,4 +315,6 @@ module.exports = {
   contains,
   displayTransitionJSON,
   trimInside,
+  chain,
+  every
 }

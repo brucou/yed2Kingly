@@ -1,7 +1,7 @@
-const { INIT_EVENT, INIT_STATE } = require('kingly');
+const {INIT_EVENT, INIT_STATE} = require('kingly');
 const assert = require('assert');
-const { formatResult} = require('../helpers');
-const { computeTransitionsAndStatesFromXmlString } = require('../conversion');
+const {formatResult} = require('../helpers');
+const {computeTransitionsAndStatesFromXmlString} = require('../conversion');
 
 // cf. tests/graphs/test-yed-conversion.graphml
 const yedString = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
@@ -98,7 +98,6 @@ mini UI</y:NodeLabel>
         </node>
         <node id="n1::n3" yfiles.foldertype="group">
           <data key="d4" xml:space="preserve"/>
-          <data key="d5"/>
           <data key="d6">
             <y:ProxyAutoBoundsNode>
               <y:Realizers active="0">
@@ -189,7 +188,6 @@ mini UI</y:NodeLabel>
     </node>
     <node id="n3" yfiles.foldertype="group">
       <data key="d4" xml:space="preserve"/>
-      <data key="d5"/>
       <data key="d6">
         <y:ProxyAutoBoundsNode>
           <y:Realizers active="0">
@@ -292,7 +290,6 @@ dam</y:NodeLabel>
       </data>
     </edge>
     <edge id="n3::e0" source="n3::n1" target="n3::n0">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="15.0" tx="0.0" ty="-30.5"/>
@@ -306,7 +303,6 @@ dam</y:NodeLabel>
       </data>
     </edge>
     <edge id="n3::e1" source="n3::n0" target="n3::n0">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="-32.0" sy="-15.25" tx="-16.0" ty="-30.5">
@@ -322,19 +318,18 @@ dam</y:NodeLabel>
       </data>
     </edge>
     <edge id="n3::e2" source="n3::n0" target="n3::n2">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="30.5" tx="0.0" ty="-30.5"/>
           <y:LineStyle color="#000000" type="line" width="1.0"/>
           <y:Arrows source="none" target="standard"/>
-          <y:EdgeLabel alignment="center" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="18.701171875" horizontalTextPosition="center" iconTextGap="4" modelName="free" modelPosition="anywhere" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="149.388671875" x="2.0" xml:space="preserve" y="10.125">stay [not(isOk)] / deactivate<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" frozen="true" placement="anywhere" side="anywhere" sideReference="relative_to_edge_flow"/></y:EdgeLabel>
+          <y:EdgeLabel alignment="left" configuration="AutoFlippingLabel" distance="2.0" fontFamily="Dialog" fontSize="12" fontStyle="plain" hasBackgroundColor="false" hasLineColor="false" height="33.40234375" horizontalTextPosition="center" iconTextGap="4" modelName="free" modelPosition="anywhere" preferredPlacement="anywhere" ratio="0.5" textColor="#000000" verticalTextPosition="bottom" visible="true" width="285.232421875" x="-65.921875" xml:space="preserve" y="2.7744140625">| stay [not(isOk, shown)] / deactivate, restore session
+| trace sent<y:PreferredPlacementDescriptor angle="0.0" angleOffsetOnRightSide="0" angleReference="absolute" angleRotationOnRightSide="co" distance="-1.0" frozen="true" placement="anywhere" side="anywhere" sideReference="relative_to_edge_flow"/></y:EdgeLabel>
           <y:BendStyle smoothed="false"/>
         </y:PolyLineEdge>
       </data>
     </edge>
     <edge id="n3::e3" source="n3::n2" target="n3::n3">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="30.5" tx="0.0" ty="-15.0"/>
@@ -348,7 +343,6 @@ dam</y:NodeLabel>
       </data>
     </edge>
     <edge id="e2" source="n3::n0" target="n1::n3::n2">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="-32.0" sy="15.25" tx="0.0" ty="-30.5">
@@ -364,7 +358,6 @@ dam</y:NodeLabel>
       </data>
     </edge>
     <edge id="e3" source="n3::n2" target="n1::n3">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="-32.0" sy="0.0" tx="128.25" ty="-131.688232421875">
@@ -414,7 +407,6 @@ dam</y:NodeLabel>
       </data>
     </edge>
     <edge id="n1::e1" source="n1::n0" target="n1::n4">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="30.5" tx="0.0" ty="-30.5"/>
@@ -452,7 +444,6 @@ dam</y:NodeLabel>
       </data>
     </edge>
     <edge id="n1::n3::e0" source="n1::n3::n1" target="n1::n3::n0">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="0.0" sy="15.0" tx="0.0" ty="-30.5"/>
@@ -464,7 +455,6 @@ dam</y:NodeLabel>
       </data>
     </edge>
     <edge id="n1::n3::e1" source="n1::n3::n1" target="n1::n3::n2">
-      <data key="d9"/>
       <data key="d10">
         <y:PolyLineEdge>
           <y:Path sx="15.0" sy="0.0" tx="-32.0" ty="0.0">
@@ -483,10 +473,11 @@ dam</y:NodeLabel>
     <y:Resources/>
   </data>
 </graphml>
+
 `
 
 describe('Conversion yed to kingly', function () {
-  const { getKinglyTransitions, stateYed2KinglyMap, states, events } = computeTransitionsAndStatesFromXmlString(yedString);
+  const {getKinglyTransitions, stateYed2KinglyMap, states, events} = computeTransitionsAndStatesFromXmlString(yedString);
 
   describe('stateYed2KinglyMap', function () {
     it('Internal labels given to nodes as per XML file are correctly mapped to user-given names of nodes/control states', function () {
@@ -514,24 +505,18 @@ describe('Conversion yed to kingly', function () {
   describe('states', function () {
     it(`The state hierarchy of the yed graph is correctly converted to a Kingly states configuration property`, function () {
       assert.deepEqual(states, {
-        // "n0ღinit",
         "n2ღupdating": "",
         "n1ღGroup 1": {
           "n1::n0ღShowing\nmini UI": "",
-          // "n1::n1ღinit",
-          // "n1::n2ღH*": "",
           "n1::n3ღbig UI collapsed": {
             "n1::n3::n0ღIf": "",
-            // "n1::n3::n1ღinit",
             "n1::n3::n2ღthen else": "",
           },
           "n1::n4ღdummy": "",
         },
         "n3ღGroup 3": {
           "n3::n0ღran kan \nkan": "",
-          // "n3::n1ღinit",
           "n3::n2ღpa dam\ndam": "",
-          // "n3::n3ღH": "",
         },
       });
     });
@@ -540,15 +525,22 @@ describe('Conversion yed to kingly', function () {
   describe('events', function () {
     it(`The events used in the yed graph are correctly converted to a Kingly events configuration property`, function () {
       assert.deepEqual(events, [
-        "trace sent",
-        "stay",
-        "minimize clicked"
+          "trace sent",
+          "stay",
+          "minimize clicked"
         ],
       );
     });
   });
 
-  describe('getKinglyTransitions', function () {
+  // DEPRECATED
+  // With the addition of comma-separated composites guards and actions,
+  // there is no longer a convenient way to get the transitions in a
+  // way that is easy to test against expected values.
+  // Guards and actions use higher-order functions which always have
+  // the same name, so it is not possible to discriminate what is inside.
+  // We keep the test here for the record of the decision
+  describe.skip('getKinglyTransitions', function () {
     it(`The transitions for the yed graph are correctly reflected in a Kingly transitions configuration property`, function () {
       const actionFactories = {
         activate: "-activate",
@@ -565,7 +557,7 @@ describe('Conversion yed to kingly', function () {
         "another only guard": "-another only guard"
 
       };
-      const formattedTransitions = getKinglyTransitions({ actionFactories, guards }).transitions
+      const formattedTransitions = getKinglyTransitions({actionFactories, guards}).transitions
         .map(formatResult);
 
       assert.deepEqual(formattedTransitions, [
