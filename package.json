@@ -13,6 +13,9 @@
     "@brucou/yed2kingly": "bin/yed2kingly",
     "yed2kingly": "bin/yed2kingly"
   },
+  "scripts": {
+    "tests": "cd tests && mocha *specs*"
+  },
   "dependencies": {
     "commander": "^5.0.0",
     "fast-xml-parser": "^3.16.0",
