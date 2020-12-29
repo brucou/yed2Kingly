@@ -1,6 +1,6 @@
 {
   "name": "yed2kingly",
-  "version": "0.5.0",
+  "version": "0.6.0",
   "author": "brucou",
   "description": "Supports the conversion of graphs drawn with the yed editor into Kingly state machines",
   "devDependencies": {
