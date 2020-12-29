@@ -540,142 +540,142 @@ describe('Conversion yed to kingly', function () {
   // Guards and actions use higher-order functions which always have
   // the same name, so it is not possible to discriminate what is inside.
   // We keep the test here for the record of the decision
-  describe.skip('getKinglyTransitions', function () {
-    it(`The transitions for the yed graph are correctly reflected in a Kingly transitions configuration property`, function () {
-      const actionFactories = {
-        activate: "-activate",
-        "update trace store": "-update trace store",
-        "deactivate": "-deactivate",
-        "expand clicked": "-expand clicked",
-        "restore session": "-restore session",
-      };
-      const guards = {
-        isOk: "-isOk",
-        "not(isOk)": "-not(isOk)",
-        "shown": "-shown",
-        "only guard": "-only guard",
-        "another only guard": "-another only guard"
-
-      };
-      const formattedTransitions = getKinglyTransitions({actionFactories, guards}).transitions
-        .map(formatResult);
-
-      assert.deepEqual(formattedTransitions, [
-          // NOTE: top-level initial transition (simulates initialControlState)
-          // so no event is allowed by the user on such pseudo-states
-          {
-            "action": "-activate",
-            "event": INIT_EVENT,
-            "from": INIT_STATE,
-            "to": "n1ღGroup 1",
-          },
-          {
-            "action": "-update trace store",
-            "event": "trace sent",
-            "from": "n1ღGroup 1",
-            "to": "n2ღupdating",
-          },
-          {
-            "action": "ACTION_IDENTITY",
-            "event": INIT_EVENT,
-            "from": "n3ღGroup 3",
-            "to": "n3::n0ღran kan \nkan",
-          },
-          {
-            "event": "stay",
-            "from": "n3::n0ღran kan \nkan",
-            "guards": [
-              {
-                "action": "ACTION_IDENTITY",
-                "predicate": "-isOk",
-                "to": "n3::n0ღran kan \nkan",
-              },
-              {
-                "action": "-deactivate",
-                "predicate": "-not(isOk)",
-                "to": "n3::n2ღpa dam\ndam",
-              }
-            ]
-          },
-          {
-            "event": "",
-            "from": "n3::n2ღpa dam\ndam",
-            "guards": [
-              {
-                "action": "ACTION_IDENTITY",
-                "predicate": "T",
-                "to": {
-                  "shallow": "n3ღGroup 3"
-                }
-              },
-              {
-                "action": "ACTION_IDENTITY",
-                "predicate": "T",
-                "to": "n1::n3ღbig UI collapsed"
-              }
-            ]
-          },
-          {
-            "action": "ACTION_IDENTITY",
-            "event": "",
-            "from": "n3::n0ღran kan \nkan",
-            "to": "n1::n3::n2ღthen else"
-          },
-          {
-            "action": "ACTION_IDENTITY",
-            "event": "",
-            "from": "n2ღupdating",
-            "to": {
-              "deep": "n1ღGroup 1"
-            }
-          },
-          {
-            "event": "",
-            "from": "n1::n0ღShowing\nmini UI",
-            "guards": [
-              {
-                "action": "-expand clicked",
-                "predicate": "-shown",
-                "to": "n1::n3::n0ღIf",
-              },
-              {
-                "action": "ACTION_IDENTITY",
-                "predicate": "T",
-                "to": "n1::n4ღdummy",
-              }
-            ]
-          },
-          {
-            "action": "-restore session",
-            "event": INIT_EVENT,
-            "from": "n1ღGroup 1",
-            "to": "n1::n0ღShowing\nmini UI",
-          },
-          {
-            "action": "ACTION_IDENTITY",
-            "event": "minimize clicked",
-            "from": "n1::n3::n0ღIf",
-            "to": "n1::n0ღShowing\nmini UI"
-          },
-          {
-            "event": INIT_EVENT,
-            "from": "n1::n3ღbig UI collapsed",
-            "guards": [
-              {
-                "action": "ACTION_IDENTITY",
-                "predicate": "-only guard",
-                "to": "n1::n3::n0ღIf"
-              },
-              {
-                "action": "ACTION_IDENTITY",
-                "predicate": "-another only guard",
-                "to": "n1::n3::n2ღthen else"
-              }
-            ]
-          }
-        ]
-      );
-    });
-  });
+  // describe.skip('getKinglyTransitions', function () {
+  //   it(`The transitions for the yed graph are correctly reflected in a Kingly transitions configuration property`, function () {
+  //     const actionFactories = {
+  //       activate: "-activate",
+  //       "update trace store": "-update trace store",
+  //       "deactivate": "-deactivate",
+  //       "expand clicked": "-expand clicked",
+  //       "restore session": "-restore session",
+  //     };
+  //     const guards = {
+  //       isOk: "-isOk",
+  //       "not(isOk)": "-not(isOk)",
+  //       "shown": "-shown",
+  //       "only guard": "-only guard",
+  //       "another only guard": "-another only guard"
+  //
+  //     };
+  //     const formattedTransitions = getKinglyTransitions({actionFactories, guards}).transitions
+  //       .map(formatResult);
+  //
+  //     assert.deepEqual(formattedTransitions, [
+  //         // NOTE: top-level initial transition (simulates initialControlState)
+  //         // so no event is allowed by the user on such pseudo-states
+  //         {
+  //           "action": "-activate",
+  //           "event": INIT_EVENT,
+  //           "from": INIT_STATE,
+  //           "to": "n1ღGroup 1",
+  //         },
+  //         {
+  //           "action": "-update trace store",
+  //           "event": "trace sent",
+  //           "from": "n1ღGroup 1",
+  //           "to": "n2ღupdating",
+  //         },
+  //         {
+  //           "action": "ACTION_IDENTITY",
+  //           "event": INIT_EVENT,
+  //           "from": "n3ღGroup 3",
+  //           "to": "n3::n0ღran kan \nkan",
+  //         },
+  //         {
+  //           "event": "stay",
+  //           "from": "n3::n0ღran kan \nkan",
+  //           "guards": [
+  //             {
+  //               "action": "ACTION_IDENTITY",
+  //               "predicate": "-isOk",
+  //               "to": "n3::n0ღran kan \nkan",
+  //             },
+  //             {
+  //               "action": "-deactivate",
+  //               "predicate": "-not(isOk)",
+  //               "to": "n3::n2ღpa dam\ndam",
+  //             }
+  //           ]
+  //         },
+  //         {
+  //           "event": "",
+  //           "from": "n3::n2ღpa dam\ndam",
+  //           "guards": [
+  //             {
+  //               "action": "ACTION_IDENTITY",
+  //               "predicate": "T",
+  //               "to": {
+  //                 "shallow": "n3ღGroup 3"
+  //               }
+  //             },
+  //             {
+  //               "action": "ACTION_IDENTITY",
+  //               "predicate": "T",
+  //               "to": "n1::n3ღbig UI collapsed"
+  //             }
+  //           ]
+  //         },
+  //         {
+  //           "action": "ACTION_IDENTITY",
+  //           "event": "",
+  //           "from": "n3::n0ღran kan \nkan",
+  //           "to": "n1::n3::n2ღthen else"
+  //         },
+  //         {
+  //           "action": "ACTION_IDENTITY",
+  //           "event": "",
+  //           "from": "n2ღupdating",
+  //           "to": {
+  //             "deep": "n1ღGroup 1"
+  //           }
+  //         },
+  //         {
+  //           "event": "",
+  //           "from": "n1::n0ღShowing\nmini UI",
+  //           "guards": [
+  //             {
+  //               "action": "-expand clicked",
+  //               "predicate": "-shown",
+  //               "to": "n1::n3::n0ღIf",
+  //             },
+  //             {
+  //               "action": "ACTION_IDENTITY",
+  //               "predicate": "T",
+  //               "to": "n1::n4ღdummy",
+  //             }
+  //           ]
+  //         },
+  //         {
+  //           "action": "-restore session",
+  //           "event": INIT_EVENT,
+  //           "from": "n1ღGroup 1",
+  //           "to": "n1::n0ღShowing\nmini UI",
+  //         },
+  //         {
+  //           "action": "ACTION_IDENTITY",
+  //           "event": "minimize clicked",
+  //           "from": "n1::n3::n0ღIf",
+  //           "to": "n1::n0ღShowing\nmini UI"
+  //         },
+  //         {
+  //           "event": INIT_EVENT,
+  //           "from": "n1::n3ღbig UI collapsed",
+  //           "guards": [
+  //             {
+  //               "action": "ACTION_IDENTITY",
+  //               "predicate": "-only guard",
+  //               "to": "n1::n3::n0ღIf"
+  //             },
+  //             {
+  //               "action": "ACTION_IDENTITY",
+  //               "predicate": "-another only guard",
+  //               "to": "n1::n3::n2ღthen else"
+  //             }
+  //           ]
+  //         }
+  //       ]
+  //     );
+  //   });
+  // });
 
 });

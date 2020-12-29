@@ -96,6 +96,9 @@ function getKinglyTransitions(record) {
     );
   }
   if (!contains(predicateList, Object.keys(guards))) {
+    console.error(
+      "Some guards are missing either in the graph, or in the action implementation object! Cf guards (you passed that) vs. predicateList (from the graph) below. They must have the same items!"
+    );
     console.error({ guards: Object.keys(guards), predicateList });
     throw new Error("Some guards are missing either in the graph, or in the guard implementation object!");
   }

@@ -22,7 +22,7 @@
     "fp-rosetree": "0.6.2",
     "fs": "latest",
     "nearley": "^2.19.3",
-    "kingly": "^0.26.0",
+    "kingly": "^0.28.4",
     "prettier": "^2.0.4",
     "ramda": "^0.27.0"
   },

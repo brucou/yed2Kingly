@@ -126,7 +126,7 @@ function computeKinglyDestinationState(stateYed2KinglyMap, yedTo) {
 }
 
 function mapActionFactoryStrToActionFactoryFn(actionFactories, actionFactoryArr) {
-  console.warn(`mapActionFactoryStrToActionFactoryFn`, actionFactoryArr)
+  // console.warn(`mapActionFactoryStrToActionFactoryFn`, actionFactoryArr)
   return chain(actionFactoryArr.filter(Boolean), actionFactories)
 }
 
@@ -264,7 +264,7 @@ function chain(arrFns, actions) {
   return function chain_(s, ed, stg) {
     return (
       arrFns.reduce(function(acc, fn) {
-        console.warn(`chain_`, fn)
+        // console.warn(`chain_`, fn)
         var r = actions[fn](s, ed, stg);
 
         return {

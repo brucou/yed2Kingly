@@ -1071,6 +1071,7 @@ describe('Conversion yed to kingly', function () {
   });
 });
 
+
 describe('Conversion yed to kingly - several transitions per edge, concatenated actions', function() {
   const {
     counter,
@@ -1087,6 +1088,7 @@ describe('Conversion yed to kingly - several transitions per edge, concatenated 
       events,
       errors,
     } = computeTransitionsAndStatesFromXmlString(counter);
+
     // Build the machine
     const guards = {
       "is it": (s, e, stg) => true,
@@ -1156,15 +1158,15 @@ describe('Conversion yed to kingly - several transitions per edge, concatenated 
       [null, null, null],
     ];
 
-    it('runs the machine as per the graph', function() {
-      cases.forEach((scenario, index) => {
-        // Allows to pick some specific index for easier debugging
-        // if (index > 20) return
-        const fsm = createStateMachine(fsmDef1, settings);
-        const outputs = scenario.map(fsm);
-        assert.deepEqual(outputs, expected1[index], prettyFormat(scenario));
-      });
-    });
+    // it('runs the machine as per the graph', function() {
+    //   cases.forEach((scenario, index) => {
+    //     // Allows to pick some specific index for easier debugging
+    //     // if (index > 20) return
+    //     const fsm = createStateMachine(fsmDef1, settings);
+    //     const outputs = scenario.map(fsm);
+    //     assert.deepEqual(outputs, expected1[index], prettyFormat(scenario));
+    //   });
+    // });
 
 
   });

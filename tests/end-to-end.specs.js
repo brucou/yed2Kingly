@@ -15,13 +15,14 @@ const event3 = { event3: void 0 };
 const unknownEvent = { event3: void 0 };
 const updateState = (extendedState, updates) => Object.assign({}, extendedState, updates);
 const traceTransition = str => ({ outputs: [str], updates: {} });
+const execFile = graphMlFile => execSync(`node ..\\bin\\yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
 
 describe('End-to-end graphml to kingly', function () {
   describe('top_level_conditional_init', function () {
     // run the script on the test file
     const graphMlFile = './graphs/top-level-conditional-init.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile);
     }
     catch(err){
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`)
@@ -71,7 +72,7 @@ describe('End-to-end graphml to kingly', function () {
     // run the script on the test file
     const graphMlFile = './graphs/no-hierarchy-events-eventless.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile)
     }
     catch(err){
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`)
@@ -229,7 +230,7 @@ describe('End-to-end graphml to kingly', function () {
     // run the script on the test file
     const graphMlFile = './graphs/no-hierarchy-eventful-eventless-guards.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile)
     }
     catch(err){
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`)
@@ -405,7 +406,7 @@ describe('End-to-end graphml to kingly', function () {
     // run the script on the test file
     const graphMlFile = './graphs/top-level-conditional-init-with-hierarchy.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile)
     }
     catch(err){
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`)
@@ -469,7 +470,7 @@ describe('End-to-end graphml to kingly', function () {
     // run the script on the test file
     const graphMlFile = './graphs/hierarchy-conditional-init.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile)
     }
     catch(err){
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`)
@@ -537,7 +538,7 @@ describe('End-to-end graphml to kingly', function () {
     // run the script on the test file
     const graphMlFile = './graphs/deep-hierarchy-conditional-automatic-init-event-eventless.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile)
     }
     catch(err){
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`)
@@ -694,7 +695,7 @@ describe('End-to-end graphml to kingly', function () {
     // run the script on the test file
     const graphMlFile = './graphs/hierarchy-history-H.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile)
     }
     catch(err){
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`)
@@ -793,7 +794,7 @@ describe('End-to-end graphml to kingly', function () {
     // run the script on the test file
     const graphMlFile = './graphs/hierarchy-history-H-star.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile)
     }
     catch(err){
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`)
@@ -891,7 +892,7 @@ describe('End-to-end graphml to kingly', function () {
     // run the script on the test file
     const graphMlFile = './graphs/deep-hierarchy-history-H-star.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile)
     }
     catch(err){
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`)
@@ -995,7 +996,7 @@ describe('End-to-end graphml to kingly', function () {
     // run the script on the test file
     const graphMlFile = './graphs/deep-hierarchy-history-H.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile)
     }
     catch(err){
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`)
@@ -1101,7 +1102,7 @@ describe('End-to-end graphml to kingly - several transitions per edge', function
     // run the script on the test file
     const graphMlFile = './graphs/counter-inc-dec.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile)
     }
     catch (err) {
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`);
@@ -1193,7 +1194,7 @@ describe('End-to-end graphml to kingly - several transitions per edge', function
     // run the script on the test file
     const graphMlFile = './graphs/counter-inc-dec.graphml';
     try {
-      execSync(`yed2kingly ${graphMlFile}`, [],{cwd: TEST_DIR});
+      execFile(graphMlFile)
     }
     catch (err) {
       assert.ok(true, false, `Failed to execute the conversion on file ${graphMlFile}`);

@@ -174,10 +174,10 @@ The exported events, states, getKinglyTransitions can then be used in a regular 
 ``` 
 
 # Tests
-Tests are run with [mocha](https://mochajs.org/). Go to the [`tests` directory](https://github.com/brucou/yed2Kingly/tree/master/tests) and run:
+Tests are run with [mocha](https://mochajs.org/). From the installation directory, run:
 
 ```bash
-mcocha *specs*
+npm run tests
 ``` 
 
 # Final note
