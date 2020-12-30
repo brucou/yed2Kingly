@@ -17,7 +17,7 @@ In a typical process, I start designing a machine from the specifications by dra
 
 # Usage
 ```bash
-mode ${yed2kingly filepath}/index.js file.graphml
+node ${yed2kingly filepath}/bin/yed2kingly file.graphml
 ```
 
 Running the converter produces two files, targeted at consumption in a browser and node.js environment:
