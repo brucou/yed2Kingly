@@ -1,6 +1,6 @@
 {
   "name": "yed2kingly",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "author": "brucou",
   "description": "Supports the conversion of graphs drawn with the yed editor into Kingly state machines",
   "devDependencies": {
@@ -11,7 +11,8 @@
   },
   "bin": {
     "@brucou/yed2kingly": "bin/yed2kingly",
-    "yed2kingly": "bin/yed2kingly"
+    "yed2kingly": "bin/yed2kingly",
+    "y2k": "bin/yed2kingly"
   },
   "scripts": {
     "tests": "cd tests && mocha *specs*"
