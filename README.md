@@ -13,11 +13,17 @@ This makes yEd a valuable tool to use for state machine creation, edition and ma
 In a typical process, I start designing a machine from the specifications by drawing it in the yEd editor. When I am done or ready to test the results of my design, I save the file. yEd by default saves its files in a .graphml format. I save the graphml file in the same directory in which I want to use the created state machine. From there, a previously launched watcher runs the `yed2kingly` node script on the newly saved file and generates a JavaScript file that exports the events, state hierarchy and transitions contained in the graph — you can of course also run the script manually instead of using a watcher. The provided exports can then be used as parameters to create a Kingly state machine.
 
 # Install
-`npm install yed2kingly`
+To use `yed2kingly` in the shell, you need to install the package globally:
+
+```bash
+npm install -g yed2kingly
+```
 
 # Usage
 ```bash
-node ${yed2kingly filepath}/bin/yed2kingly file.graphml
+yed2kingly file.graphml 
+# Or,
+y2k file.graphml
 ```
 
 Running the converter produces two files, targeted at consumption in a browser and node.js environment:
