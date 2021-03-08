@@ -126,7 +126,6 @@ function computeKinglyDestinationState(stateYed2KinglyMap, yedTo) {
 }
 
 function mapActionFactoryStrToActionFactoryFn(actionFactories, actionFactoryArr) {
-  // console.warn(`mapActionFactoryStrToActionFactoryFn`, actionFactoryArr)
   return chain(actionFactoryArr.filter(Boolean), actionFactories)
 }
 

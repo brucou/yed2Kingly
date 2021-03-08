@@ -37,6 +37,10 @@ const getYedEdgeLabel = edgeML => {
 const getLabel = (graphObj) => {
   const graphData = graphObj.data;
   const yedNodeId = graphObj['@_id'];
+
+  // Edge case: top-level of the graph has no id
+  if (!yedNodeId) return [,];
+
   const d6Key = Array.isArray(graphData)
     ? find(keyRow => keyRow ['@_key'] === 'd6', graphData)
     : graphData['@_key'] === 'd6' ? graphData : null
@@ -53,8 +57,11 @@ const getLabel = (graphObj) => {
     return [yedNodeId, groupName]
   }
   else {
-    const atomicStateName = view(lensPath(['y:ShapeNode', 'y:NodeLabel', '#text']), graphData)
-    return [yedNodeId, atomicStateName]
+    // console.error (`getYedEdgeLabel > not compound state`, graphObj)
+    const atomicStateName = view(lensPath(['y:ShapeNode', 'y:NodeLabel', '#text']), graphData) || view(lensPath(['y:GenericNode', 'y:NodeLabel', '#text']), graphData);
+    if (!atomicStateName) throw `getYedEdgeLabel > Error while parsing Yed file. Trying to read the name of an atomic state and found none. This may due to the location of the label having changed or being in a new location. For now, we find them under ShapeNode or GenericNode. Please check the file. Graph context: ${prettyFormat(graphObj)} `
+
+    return [yedNodeId, trimInside(atomicStateName)]
   }
 };
 const getChildren = graphObj => (graphObj.graph ? graphObj.graph.node : []);
