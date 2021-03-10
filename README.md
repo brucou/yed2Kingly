@@ -45,7 +45,7 @@ The produced file export three objects: the events, state hierarchy and a transi
 
 ## Rules
 Some definitions:
-  - An initial transition is that which originates from a node whose label is `init`
+  - An initial transition is that which originates from a node whose label is `init` (or any capitalization of the word, e.g., Init, iNit)
   - A top-level initial transition is that initial transition which does not have any parent node
   - A history pseudo-state is a node whose label is H (shallow history) or H* (deep history)
   - A compound node is a node which is created in the yEd interface by using the group functionality (*Grouping > Group* or *Ctrl-Alt-G* in version 3.19).
@@ -72,24 +72,39 @@ There are plenty of graph examples in the [test directory](https://github.com/br
 
 ![example of yed graph with history pseudo-state and compound state](https://imgur.com/VjKaIkL.png)
 
-Running the `yed2Kingly` script produces the following JavaScript file:
+Running the `yed2Kingly` script produces the following JavaScript file (v0.6):
 
 ```js
+import { createStateMachine } from "kingly";
+
 // Copy-paste help
-// For debugging purposes, functions should all have a name
-// Using natural language sentences in the graph is valid
-// However, you will have to find a valid JavaScript name for the matching function
+// For debugging purposes, guards and actions functions should all have a name
+// Using natural language sentences for labels in the graph is valid
+// guard and action functions name still follow JavaScript rules though
 // -----Guards------
+/**
+ * @param {E} extendedState
+ * @param {D} eventData
+ * @param {X} settings
+ * @returns Boolean
+ */
 // const guards = {
 // };
 // -----Actions------
+/**
+ * @param {E} extendedState
+ * @param {D} eventData
+ * @param {X} settings
+ * @returns {{updates: U[], outputs: O[]}}
+ * (such that updateState:: E -> U[] -> E)
+ */
 // const actions = {
-//   "logGroup1toH": function (){},,,
-//   "logBtoC": function (){},,
-//   "logBtoD": function (){},,
-//   "logCtoD": function (){},,
-//   "logGroup1toD": function (){},,
-//   "logGroup1toC": function (){},,
+//   "logGroup1toH": function (){},
+//   "logBtoC": function (){},
+//   "logBtoD": function (){},
+//   "logCtoD": function (){},
+//   "logGroup1toD": function (){},
+//   "logGroup1toC": function (){},
 //   "logDtoD": function (){},
 // };
 // ----------------
@@ -98,57 +113,116 @@ function contains(as, bs) {
     return bs.indexOf(a) > -1;
   });
 }
-var NO_OUTPUT = null;
+
+function chain(arrFns, actions) {
+  return function chain_(s, ed, stg) {
+    return arrFns.reduce(
+      function (acc, fn) {
+        var r = actions[fn](s, ed, stg);
+
+        return {
+          updates: acc.updates.concat(r.updates),
+          outputs: acc.outputs.concat(r.outputs),
+        };
+      },
+      { updates: [], outputs: [] }
+    );
+  };
+}
+
+function every(arrFns, guards) {
+  return function every_(s, ed, stg) {
+    return arrFns.reduce(function (acc, fn) {
+      var r = guards[fn](s, ed, stg);
+
+      return r && acc;
+    }, true);
+  };
+}
+
+var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
 var events = ["event3", "event2", "event1"];
 var states = {
-  n1ღE: "",
-  "n2ღGroup 1": { "n2::n0ღB": "", "n2::n1ღC": "", "n2::n2ღGroup 1": { "n2::n2::n0ღD": "", "n2::n2::n2ღD": "" } },
+  Eღn1: "",
+  "Group 1ღn2": { "Bღn2::n0": "", "Cღn2::n1": "", "Group 1ღn2::n2": { "Dღn2::n2::n0": "", "Dღn2::n2::n2": "" } },
 };
 function getKinglyTransitions(record) {
   var aF = record.actionFactories;
   var guards = record.guards;
-  var actionList = [
-    "logGroup1toH",
-    "ACTION_IDENTITY",
-    "logBtoC",
-    "logBtoD",
-    "logCtoD",
-    "logGroup1toD",
-    "logGroup1toC",
-    "logDtoD",
-  ];
+  var actionList = ["logGroup1toH", "logBtoC", "logBtoD", "logCtoD", "logGroup1toD", "logGroup1toC", "logDtoD"];
   var predicateList = [];
-  aF["ACTION_IDENTITY"] = function ACTION_IDENTITY() {
-    return {
-      outputs: NO_OUTPUT,
-      updates: NO_STATE_UPDATE,
-    };
-  };
   if (!contains(actionList, Object.keys(aF))) {
+    console.error(
+      "Some actions are missing either in the graph, or in the action implementation object! Cf actionFactories (you passed that) vs. actionList (from the graph) below. They must have the same items!"
+    );
     console.error({ actionFactories: Object.keys(aF), actionList });
-    throw new Error("Some action are missing either in the graph, or in the action implementation object!");
+    var passedAndMissingInGraph = Object.keys(aF).filter(function (k) {
+      return actionList.indexOf(k) === -1;
+    });
+    passedAndMissingInGraph.length > 0 &&
+      console.error(
+        "So the following actions were passed in parameters but do not match any action in the graph! This may happen if you modified the name of an action in the graph, but kept using the older name in the implementation! Please check.",
+        passedAndMissingInGraph
+      );
+    var inGraphButNotImplemented = actionList.filter(function (k) {
+      return Object.keys(aF).indexOf(k) === -1;
+    });
+    inGraphButNotImplemented.length > 0 &&
+      console.error(
+        "So the following actions declared in the graph are not implemented! Please add the implementation. You can have a look at the comments of the generated fsm file for typing information.",
+        inGraphButNotImplemented
+      );
+    throw new Error(
+      "Some actions implementations are missing either in the graph, or in the action implementation object!"
+    );
   }
   if (!contains(predicateList, Object.keys(guards))) {
+    console.error(
+      "Some guards are missing either in the graph, or in the action implementation object! Cf guards (you passed that) vs. predicateList (from the graph) below. They must have the same items!"
+    );
     console.error({ guards: Object.keys(guards), predicateList });
     throw new Error("Some guards are missing either in the graph, or in the guard implementation object!");
   }
   const transitions = [
-    { from: "n2ღGroup 1", event: "event3", to: "n1ღE", action: aF["logGroup1toH"] },
-    { from: "n1ღE", event: "", to: { shallow: "n2ღGroup 1" }, action: aF["ACTION_IDENTITY"] },
-    { from: "nok", event: "init", to: "n2::n0ღB", action: aF["ACTION_IDENTITY"] },
-    { from: "n2::n0ღB", event: "event2", to: "n2::n1ღC", action: aF["logBtoC"] },
-    { from: "n2::n0ღB", event: "event1", to: "n2::n2::n2ღD", action: aF["logBtoD"] },
-    { from: "n2::n1ღC", event: "", to: "n2::n2::n0ღD", action: aF["logCtoD"] },
-    { from: "n2::n2ღGroup 1", event: "init", to: "n2::n2::n0ღD", action: aF["logGroup1toD"] },
-    { from: "n2ღGroup 1", event: "init", to: "n2::n1ღC", action: aF["logGroup1toC"] },
-    { from: "n2::n2::n2ღD", event: "event1", to: "n2::n2::n0ღD", action: aF["logDtoD"] },
+    { from: "Group 1ღn2", event: "event3", to: "Eღn1", action: chain(["logGroup1toH"], aF) },
+    { from: "Eღn1", event: "", to: { shallow: "Group 1ღn2" }, action: chain([], aF) },
+    { from: "nok", event: "init", to: "Bღn2::n0", action: chain([], aF) },
+    { from: "Bღn2::n0", event: "event2", to: "Cღn2::n1", action: chain(["logBtoC"], aF) },
+    { from: "Bღn2::n0", event: "event1", to: "Dღn2::n2::n2", action: chain(["logBtoD"], aF) },
+    { from: "Cღn2::n1", event: "", to: "Dღn2::n2::n0", action: chain(["logCtoD"], aF) },
+    { from: "Group 1ღn2::n2", event: "init", to: "Dღn2::n2::n0", action: chain(["logGroup1toD"], aF) },
+    { from: "Group 1ღn2", event: "init", to: "Cღn2::n1", action: chain(["logGroup1toC"], aF) },
+    { from: "Dღn2::n2::n2", event: "event1", to: "Dღn2::n2::n0", action: chain(["logDtoD"], aF) },
   ];
 
   return transitions;
 }
 
-export { events, states, getKinglyTransitions };
+function createStateMachineFromGraph(fsmDefForCompile, settings) {
+  var updateState = fsmDefForCompile.updateState;
+  var initialExtendedState = fsmDefForCompile.initialExtendedState;
+
+  var transitions = getKinglyTransitions({
+    actionFactories: fsmDefForCompile.actionFactories,
+    guards: fsmDefForCompile.guards,
+  });
+
+  var fsm = createStateMachine(
+    {
+      updateState,
+      initialExtendedState,
+      states,
+      events,
+      transitions,
+    },
+    settings
+  );
+
+  return fsm;
+}
+
+export { events, states, getKinglyTransitions, createStateMachineFromGraph };
 
 ```
 
@@ -179,6 +253,8 @@ The exported events, states, getKinglyTransitions can then be used in a regular 
 
 ``` 
 
+Alternatively, the `createStateMachineFromGraph` function can also be used.
+
 # Tests
 Tests are run with [mocha](https://mochajs.org/). From the installation directory, run:
 
@@ -187,6 +263,6 @@ npm run tests
 ``` 
 
 # Final note
-I chose this process after plenty of reflection of pondering over what was the best approach for this functionality. A babel plugin or macro was a possibility but the level of complexity was much higher -- both from a macro creator and a macro user perspective,and the predictable requirements in term of maintenance were also appreciable. The retained solution is to produce the outputs of the file conversion in a separate, independent JavaScript file. There is thus no necessity to write proprietary JavaScript, it is programming as usual.
+I chose this process after plenty of reflection of pondering over what was the best approach for this functionality. A Babel plugin or macro was a possibility but the level of complexity was much higher -- both from a macro creator and a macro user perspective,and the predictable requirements in term of maintenance were also appreciable. The retained solution is to produce the outputs of the file conversion in a separate, independent JavaScript file. There is thus no necessity to write proprietary JavaScript, it is programming as usual.
 
 This is a first version based on my personal usage. I am interested in hearing your comments and recommendations if you have them about a better way to handle the integration of a graph editor with Kingly JavaScript library. Feel free to open an issue.
