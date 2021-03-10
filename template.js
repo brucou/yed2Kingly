@@ -7,6 +7,7 @@ function hasGuards(guards) {
 
 const implDoStr = `
 function chain(arrFns, actions) {
+  if (arrFns.length === 0) return function NO_ACTION(){return {outputs:[], updates: []}}
   if (arrFns.length === 1) return actions[arrFns[0]];
   return function chain_(s, ed, stg) {
     return (
