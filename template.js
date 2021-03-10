@@ -7,6 +7,7 @@ function hasGuards(guards) {
 
 const implDoStr = `
 function chain(arrFns, actions) {
+  if (arrFns.length === 1) return actions[arrFns[0]];
   return function chain_(s, ed, stg) {
     return (
       arrFns.reduce(function(acc, fn) {
@@ -24,6 +25,7 @@ function chain(arrFns, actions) {
 
 const implEveryStr = `
 function every(arrFns, guards) {
+  if (arrFns.length === 1) return guards[arrFns[0]];
   return function every_(s, ed, stg) {
     return (
       arrFns.reduce(function(acc, fn) {

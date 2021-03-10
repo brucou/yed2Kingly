@@ -35,6 +35,7 @@ function contains(as, bs) {
 }
 
 function chain(arrFns, actions) {
+  if (arrFns.length === 1) return actions[arrFns[0]];
   return function chain_(s, ed, stg) {
     return arrFns.reduce(
       function (acc, fn) {
@@ -51,6 +52,7 @@ function chain(arrFns, actions) {
 }
 
 function every(arrFns, guards) {
+  if (arrFns.length === 1) return guards[arrFns[0]];
   return function every_(s, ed, stg) {
     return arrFns.reduce(function (acc, fn) {
       var r = guards[fn](s, ed, stg);
