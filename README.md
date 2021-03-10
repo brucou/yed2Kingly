@@ -253,7 +253,7 @@ The exported events, states, getKinglyTransitions can then be used in a regular 
 
 ``` 
 
-Alternatively, the `createStateMachineFromGraph` function can also be used.
+Alternatively, the `createStateMachineFromGraph` function can also be used. The latter function has the same signature than the `createStateMachine` produced by the compiler, which allows switching between the compiler version and the interpreted version.
 
 # Tests
 Tests are run with [mocha](https://mochajs.org/). From the installation directory, run:
