@@ -65,7 +65,7 @@ function every(arrFns, guards) {
 var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
 var events = ["event1", "event2"];
-var states = { n1ღA: "", n2ღB: "", n3ღC: "", n4ღD: "" };
+var states = { Aღn1: "", Bღn2: "", Cღn3: "", Dღn4: "" };
 function getKinglyTransitions(record) {
   var aF = record.actionFactories;
   var guards = record.guards;
@@ -104,15 +104,15 @@ function getKinglyTransitions(record) {
     throw new Error("Some guards are missing either in the graph, or in the guard implementation object!");
   }
   const transitions = [
-    { from: "nok", event: "init", to: "n1ღA", action: chain([], aF) },
-    { from: "n1ღA", event: "event1", to: "n2ღB", action: chain(["logAtoB"], aF) },
-    { from: "n1ღA", event: "event2", to: "n3ღC", action: chain(["logAtoC"], aF) },
-    { from: "n2ღB", event: "event2", to: "n4ღD", action: chain(["logBtoD"], aF) },
-    { from: "n3ღC", event: "event1", to: "n4ღD", action: chain(["logCtoD"], aF) },
+    { from: "nok", event: "init", to: "Aღn1", action: chain([], aF) },
+    { from: "Aღn1", event: "event1", to: "Bღn2", action: chain(["logAtoB"], aF) },
+    { from: "Aღn1", event: "event2", to: "Cღn3", action: chain(["logAtoC"], aF) },
+    { from: "Bღn2", event: "event2", to: "Dღn4", action: chain(["logBtoD"], aF) },
+    { from: "Cღn3", event: "event1", to: "Dღn4", action: chain(["logCtoD"], aF) },
     {
-      from: "n4ღD",
+      from: "Dღn4",
       event: "",
-      guards: [{ predicate: every(["shouldReturnToA"], guards), to: "n1ღA", action: chain(["logDtoA"], aF) }],
+      guards: [{ predicate: every(["shouldReturnToA"], guards), to: "Aღn1", action: chain(["logDtoA"], aF) }],
     },
   ];
 

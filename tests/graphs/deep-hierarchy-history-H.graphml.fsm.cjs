@@ -67,8 +67,8 @@ var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
 var events = ["event3", "event2", "event1"];
 var states = {
-  n1ღE: "",
-  "n2ღGroup 1": { "n2::n0ღB": "", "n2::n1ღC": "", "n2::n2ღGroup 1": { "n2::n2::n0ღD": "", "n2::n2::n2ღD": "" } },
+  Eღn1: "",
+  "Group 1ღn2": { "Bღn2::n0": "", "Cღn2::n1": "", "Group 1ღn2::n2": { "Dღn2::n2::n0": "", "Dღn2::n2::n2": "" } },
 };
 function getKinglyTransitions(record) {
   var aF = record.actionFactories;
@@ -108,15 +108,15 @@ function getKinglyTransitions(record) {
     throw new Error("Some guards are missing either in the graph, or in the guard implementation object!");
   }
   const transitions = [
-    { from: "n2ღGroup 1", event: "event3", to: "n1ღE", action: chain(["logGroup1toH"], aF) },
-    { from: "n1ღE", event: "", to: { shallow: "n2ღGroup 1" }, action: chain([], aF) },
-    { from: "nok", event: "init", to: "n2::n0ღB", action: chain([], aF) },
-    { from: "n2::n0ღB", event: "event2", to: "n2::n1ღC", action: chain(["logBtoC"], aF) },
-    { from: "n2::n0ღB", event: "event1", to: "n2::n2::n2ღD", action: chain(["logBtoD"], aF) },
-    { from: "n2::n1ღC", event: "", to: "n2::n2::n0ღD", action: chain(["logCtoD"], aF) },
-    { from: "n2::n2ღGroup 1", event: "init", to: "n2::n2::n0ღD", action: chain(["logGroup1toD"], aF) },
-    { from: "n2ღGroup 1", event: "init", to: "n2::n1ღC", action: chain(["logGroup1toC"], aF) },
-    { from: "n2::n2::n2ღD", event: "event1", to: "n2::n2::n0ღD", action: chain(["logDtoD"], aF) },
+    { from: "Group 1ღn2", event: "event3", to: "Eღn1", action: chain(["logGroup1toH"], aF) },
+    { from: "Eღn1", event: "", to: { shallow: "Group 1ღn2" }, action: chain([], aF) },
+    { from: "nok", event: "init", to: "Bღn2::n0", action: chain([], aF) },
+    { from: "Bღn2::n0", event: "event2", to: "Cღn2::n1", action: chain(["logBtoC"], aF) },
+    { from: "Bღn2::n0", event: "event1", to: "Dღn2::n2::n2", action: chain(["logBtoD"], aF) },
+    { from: "Cღn2::n1", event: "", to: "Dღn2::n2::n0", action: chain(["logCtoD"], aF) },
+    { from: "Group 1ღn2::n2", event: "init", to: "Dღn2::n2::n0", action: chain(["logGroup1toD"], aF) },
+    { from: "Group 1ღn2", event: "init", to: "Cღn2::n1", action: chain(["logGroup1toC"], aF) },
+    { from: "Dღn2::n2::n2", event: "event1", to: "Dღn2::n2::n0", action: chain(["logDtoD"], aF) },
   ];
 
   return transitions;

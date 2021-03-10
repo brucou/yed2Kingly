@@ -8,7 +8,7 @@ module.exports = function convert(argv) {
   const prettyFormat = require("pretty-format");
   const fs = require('fs');
   const {Command} = require('commander');
-  const {computeTransitionsAndStatesFromXmlString} = require('./conversion');
+  const {computeTransitionsAndStatesFromXmlString} = require('@brucou/utilities');
   const {checkKinglyContracts} = require('./helpers');
   const {DEFAULT_ACTION_FACTORY_STR} = require('./properties');
   const {implDoStr, implEveryStr} = require('./template');
@@ -22,14 +22,14 @@ module.exports = function convert(argv) {
   program.parse(process.argv);
 
   function hasGuards(guards){
-    return guards.length > 1 || guards.length === 1 && guards[0].predicate.map(p => p.slice(3, -3)).filter(Boolean).length > 0
+    return guards && (guards.length > 1 || guards.length === 1 && guards[0].predicate.map(p => p.slice(3, -3)).filter(Boolean).length > 0)
   }
 
 // Conversion function
 // DOC: We export two files: one cjs for node.js and js for browser esm consumption
-// NTH: May could be the export through an option (to generate module.exports = ...)
-// NTH: handle several files at the same time
-// NTH: add an output option
+// NTH: Configure exports through an option
+// NTH: Handle several files at the same time
+// NTH: Add an output option
   function convertYedFile(_file) {
     const file = _file.endsWith('.graphml') ? _file : `${_file}.graphml`;
 
@@ -66,9 +66,8 @@ module.exports = function convert(argv) {
         let actionList = new Set();
         const transitionsStr = transitionsWithoutGuardsActions.map(transitionRecord => {
           const {from, event, guards} = transitionRecord;
-          // console.warn(`transitionsWithoutGuardsActions > transitionRecord `, prettyFormat(transitionRecord));
 
-          if (guards.length === 0) throw `Got guards record that is empty array! We have a bug here!`
+          if (guards && guards.length === 0) throw `Got guards record that is empty array! We have a bug here!`
          if (hasGuards(guards) ) {
             return `
            { from: "${from}", event: "${event}", guards: [
@@ -88,10 +87,10 @@ module.exports = function convert(argv) {
         `.trim().concat(", ")
           }
           else {
-           const {predicate, to, action} = guards[0];
-           const predicates = predicate.map(x => x.slice(3, -3)).filter(Boolean);
+            // TODO: ?? we should come here iff we have a simplified syntax
+           // but then there is no predicate and no need to add to the list
+           const {from, event, to, action} = transitionRecord;
            const actions = action.map(x => x.slice(3, -3)).filter(Boolean);
-           predicates.forEach(x => predicateList.add(x));
            actions.forEach(x => actionList.add(x));
 
             return `

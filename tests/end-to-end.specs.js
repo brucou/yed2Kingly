@@ -203,10 +203,10 @@ describe('End-to-end graphml to kingly', function () {
       assert.deepEqual(
         states,
         {
-          n1ღA: '',
-          n2ღB: '',
-          n3ღC: '',
-          n4ღD: '',
+          Aღn1: '',
+          Bღn2: '',
+          Cღn3: '',
+          Dღn4: '',
         },
         `The hierarchy of states is correctly parsed`
       );
@@ -389,10 +389,10 @@ describe('End-to-end graphml to kingly', function () {
       assert.deepEqual(
         states,
         {
-          n1ღA: '',
-          n2ღTemp1: '',
-          n3ღTemp2: '',
-          n4ღDone: '',
+          Aღn1: '',
+          Temp1ღn2: '',
+          Temp2ღn3: '',
+          Doneღn4: '',
         },
         `The hierarchy of states is correctly parsed`
       );
@@ -448,16 +448,12 @@ describe('End-to-end graphml to kingly', function () {
     const outputs2 = [{ [events[0] + 'X']: void 0 }, { [events[0]]: void 0 }, { [events[0]]: void 0 }].map(fsm2);
     const expected2 = [null, ['logOther run on '], null];
 
-    it('runs the machine as per the graph', function() {
+    it('runs the machine as per the graph', function () {
       assert.deepEqual(events, ['continue'], `events correctly parsed`);
       assert.deepEqual(
         states,
         {
-          "n1ღGroup 1": {
-            'n1::n0ღNumber': '',
-            'n1::n2ღOther': '',
-            'n1::n3ღDone': '',
-          },
+          'Group 1ღn1': {'Numberღn1::n0': '', 'Otherღn1::n2': '', 'Doneღn1::n3': ''}
         },
         `state hierarchy correctly parsed`
       );
@@ -516,15 +512,15 @@ describe('End-to-end graphml to kingly', function () {
     const outputs2 = [unknownEvent, { event1: void 0 }].map(fsm2);
     const expected2 = [null, ['A -> C']];
 
-    it('runs the machine as per the graph', function() {
+    it('runs the machine as per the graph', function () {
       assert.deepEqual(events, ['event1'], `The list of events is correctly parsed`);
       assert.deepEqual(
         states,
         {
-          n1ღA: '',
-          'n2ღGroup 1': {
-            'n2::n0ღB': '',
-            'n2::n2ღC': '',
+          Aღn1: '',
+          'Group 1ღn2': {
+            'Bღn2::n0': '',
+            'Cღn2::n2': '',
           },
         },
         `The hierarchy of states is correctly parsed`
@@ -611,27 +607,27 @@ describe('End-to-end graphml to kingly', function () {
       { event1: { shouldReturnToA: false } },
     ].map(createStateMachine(fsmDef, settings));
 
-    it('runs the machine as per the graph', function() {
+    it('runs the machine as per the graph', function () {
       assert.deepEqual(events, ['event1', 'event2'], `events correctly parsed`);
       assert.deepEqual(
-        states,
-        {
-          n1ღA: '',
-          'n2ღGroup 1': {
-            'n2::n0ღB': '',
-            'n2::n2ღGroup 2': {
-              'n2::n2::n1ღGroup 3': {
-                'n2::n2::n1::n0ღB': '',
-                'n2::n2::n1::n2ღC': '',
-                'n2::n2::n1::n3ღGroup 4': {
-                  'n2::n2::n1::n3::n0ღA': '',
-                  'n2::n2::n1::n3::n1ღB': '',
-                  'n2::n2::n1::n3::n2ღC': '',
-                  'n2::n2::n1::n3::n3ღD': '',
-                },
-              },
-            },
-          },
+        states, {
+          "Aღn1": "",
+          "Group 1ღn2": {
+            "Bღn2::n0": "",
+            "Group 2ღn2::n2": {
+              "Group 3ღn2::n2::n1": {
+                "Bღn2::n2::n1::n0": "",
+                "Cღn2::n2::n1::n2": "",
+                "Group 4ღn2::n2::n1::n3": {
+                  "Aღn2::n2::n1::n3::n0": "",
+                  "Bღn2::n2::n1::n3::n1": "",
+                  "Cღn2::n2::n1::n3::n2": "",
+                  "Dღn2::n2::n1::n3::n3": ""
+
+                }
+              }
+            }
+          }
         },
         `state hierarchy correctly parsed`
       );
@@ -771,16 +767,16 @@ describe('End-to-end graphml to kingly', function () {
       [['D -> Group1H'], ['D -> Group1H'], ['D -> Group1H']],
     ];
 
-    it('runs the machine as per the graph', function() {
+    it('runs the machine as per the graph', function () {
       assert.deepEqual(events, ['event3', 'event1', 'event2'], `The list of events is correctly parsed`);
       assert.deepEqual(
         states,
         {
-          n1ღD: '',
-          'n2ღGroup 1': {
-            'n2::n0ღB': '',
-            'n2::n1ღC': '',
-            'n2::n2ღD': '',
+          Dღn1: '',
+          'Group 1ღn2': {
+            'Bღn2::n0': '',
+            'Cღn2::n1': '',
+            'Dღn2::n2': '',
           },
         },
         `The hierarchy of states is correctly parsed`
@@ -869,16 +865,16 @@ describe('End-to-end graphml to kingly', function () {
       [['D -> Group1H*'], ['D -> Group1H*'], ['D -> Group1H*']],
     ];
 
-    it('runs the machine as per the graph', function() {
+    it('runs the machine as per the graph', function () {
       assert.deepEqual(events, ['event3', 'event1', 'event2'], `The list of events is correctly parsed`);
       assert.deepEqual(
         states,
         {
-          n1ღD: '',
-          'n2ღGroup 1': {
-            'n2::n0ღB': '',
-            'n2::n1ღC': '',
-            'n2::n2ღD': '',
+          Dღn1: '',
+          'Group 1ღn2': {
+            'Bღn2::n0': '',
+            'Cღn2::n1': '',
+            'Dღn2::n2': '',
           },
         },
         `The hierarchy of states is correctly parsed`
@@ -970,18 +966,18 @@ describe('End-to-end graphml to kingly', function () {
       [['Group1 -> Group1H*'], ['Group1 -> Group1H*'], ['Group1 -> Group1H*']],
     ];
 
-    it('runs the machine as per the graph', function() {
+    it('runs the machine as per the graph', function () {
       assert.deepEqual(events, ['event3', 'event2', 'event1'], `The list of events is correctly parsed`);
       assert.deepEqual(
         states,
         {
-          n1ღE: '',
-          'n2ღGroup 1': {
-            'n2::n0ღB': '',
-            'n2::n1ღC': '',
-            'n2::n2ღGroup 1': {
-              'n2::n2::n0ღD': '',
-              'n2::n2::n2ღD': '',
+          'Eღn1': '',
+          'Group 1ღn2': {
+            'Bღn2::n0': '',
+            'Cღn2::n1': '',
+            'Group 1ღn2::n2': {
+              'Dღn2::n2::n0': '',
+              'Dღn2::n2::n2': '',
             },
           },
         },
@@ -1074,18 +1070,18 @@ describe('End-to-end graphml to kingly', function () {
       [['Group1 -> Group1H'], ['Group1 -> Group1H'], ['Group1 -> Group1H']],
     ];
 
-    it('runs the machine as per the graph', function() {
+    it('runs the machine as per the graph', function () {
       assert.deepEqual(events, ['event3', 'event2', 'event1'], `The list of events is correctly parsed`);
       assert.deepEqual(
         states,
         {
-          n1ღE: '',
-          'n2ღGroup 1': {
-            'n2::n0ღB': '',
-            'n2::n1ღC': '',
-            'n2::n2ღGroup 1': {
-              'n2::n2::n0ღD': '',
-              'n2::n2::n2ღD': '',
+          Eღn1: '',
+          'Group 1ღn2': {
+            'Bღn2::n0': '',
+            'Cღn2::n1': '',
+            'Group 1ღn2::n2': {
+              'Dღn2::n2::n0': '',
+              'Dღn2::n2::n2': '',
             },
           },
         },

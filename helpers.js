@@ -206,6 +206,8 @@ const fakeConsole = {
   warn: () => {},
   info: () => {},
   debug: () => {},
+  group: () => {},
+  groupEnd: () => {},
 };
 
 function checkKinglyContracts(states, events, transitions) {

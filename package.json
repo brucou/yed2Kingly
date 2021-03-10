@@ -1,6 +1,6 @@
 {
   "name": "yed2kingly",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "author": "brucou",
   "description": "Supports the conversion of graphs drawn with the yed editor into Kingly state machines",
   "devDependencies": {
@@ -17,14 +17,15 @@
     "tests": "cd tests && mocha *specs*"
   },
   "dependencies": {
-    "pretty-format": "^26.0.0",
+    "@brucou/utilities": "^0.1.9",
     "commander": "^5.0.0",
     "fast-xml-parser": "^3.16.0",
     "fp-rosetree": "0.6.2",
     "fs": "latest",
+    "kingly": "^0.28.9",
     "nearley": "^2.19.3",
-    "kingly": "^0.28.4",
     "prettier": "^2.0.4",
+    "pretty-format": "^26.0.0",
     "ramda": "^0.27.0"
   },
   "prettier": {
@@ -37,11 +38,9 @@
   "sideEffects": false,
   "files": [
     "index.js",
-    "conversion.js",
     "helpers.js",
     "properties.js",
-    "template.js",
-    "yedEdgeLabelGrammar.js"
+    "template.js"
   ],
   "license": "MIT",
   "keywords": [

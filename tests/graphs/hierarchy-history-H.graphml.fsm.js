@@ -64,7 +64,7 @@ function every(arrFns, guards) {
 var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
 var events = ["event3", "event1", "event2"];
-var states = { n1ღD: "", "n2ღGroup 1": { "n2::n0ღB": "", "n2::n1ღC": "", "n2::n2ღD": "" } };
+var states = { Dღn1: "", "Group 1ღn2": { "Bღn2::n0": "", "Cღn2::n1": "", "Dღn2::n2": "" } };
 function getKinglyTransitions(record) {
   var aF = record.actionFactories;
   var guards = record.guards;
@@ -103,13 +103,13 @@ function getKinglyTransitions(record) {
     throw new Error("Some guards are missing either in the graph, or in the guard implementation object!");
   }
   const transitions = [
-    { from: "n2ღGroup 1", event: "event3", to: "n1ღD", action: chain([], aF) },
-    { from: "n1ღD", event: "", to: { shallow: "n2ღGroup 1" }, action: chain(["logDtoGroup1H"], aF) },
-    { from: "nok", event: "init", to: "n2::n0ღB", action: chain([], aF) },
-    { from: "n2::n0ღB", event: "event1", to: "n2::n2ღD", action: chain(["logBtoD"], aF) },
-    { from: "n2::n0ღB", event: "event2", to: "n2::n1ღC", action: chain(["logBtoC"], aF) },
-    { from: "n2::n1ღC", event: "event1", to: "n2::n2ღD", action: chain(["logCtoD"], aF) },
-    { from: "n2ღGroup 1", event: "init", to: "n2::n1ღC", action: chain(["logGroup1toC"], aF) },
+    { from: "Group 1ღn2", event: "event3", to: "Dღn1", action: chain([], aF) },
+    { from: "Dღn1", event: "", to: { shallow: "Group 1ღn2" }, action: chain(["logDtoGroup1H"], aF) },
+    { from: "nok", event: "init", to: "Bღn2::n0", action: chain([], aF) },
+    { from: "Bღn2::n0", event: "event1", to: "Dღn2::n2", action: chain(["logBtoD"], aF) },
+    { from: "Bღn2::n0", event: "event2", to: "Cღn2::n1", action: chain(["logBtoC"], aF) },
+    { from: "Cღn2::n1", event: "event1", to: "Dღn2::n2", action: chain(["logCtoD"], aF) },
+    { from: "Group 1ღn2", event: "init", to: "Cღn2::n1", action: chain(["logGroup1toC"], aF) },
   ];
 
   return transitions;

@@ -74,18 +74,18 @@ var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
 var events = ["event1", "event2"];
 var states = {
-  n1ღA: "",
-  "n2ღGroup 1": {
-    "n2::n0ღB": "",
-    "n2::n2ღGroup 2": {
-      "n2::n2::n1ღGroup 3": {
-        "n2::n2::n1::n0ღB": "",
-        "n2::n2::n1::n2ღC": "",
-        "n2::n2::n1::n3ღGroup 4": {
-          "n2::n2::n1::n3::n0ღA": "",
-          "n2::n2::n1::n3::n1ღB": "",
-          "n2::n2::n1::n3::n2ღC": "",
-          "n2::n2::n1::n3::n3ღD": "",
+  Aღn1: "",
+  "Group 1ღn2": {
+    "Bღn2::n0": "",
+    "Group 2ღn2::n2": {
+      "Group 3ღn2::n2::n1": {
+        "Bღn2::n2::n1::n0": "",
+        "Cღn2::n2::n1::n2": "",
+        "Group 4ღn2::n2::n1::n3": {
+          "Aღn2::n2::n1::n3::n0": "",
+          "Bღn2::n2::n1::n3::n1": "",
+          "Cღn2::n2::n1::n3::n2": "",
+          "Dღn2::n2::n1::n3::n3": "",
         },
       },
     },
@@ -141,37 +141,37 @@ function getKinglyTransitions(record) {
     throw new Error("Some guards are missing either in the graph, or in the guard implementation object!");
   }
   const transitions = [
-    { from: "nok", event: "init", to: "n1ღA", action: chain([], aF) },
-    { from: "n1ღA", event: "event1", to: "n2ღGroup 1", action: chain(["logAtoGroup1"], aF) },
-    { from: "n2::n0ღB", event: "", to: "n2::n2ღGroup 2", action: chain([], aF) },
-    { from: "n2ღGroup 1", event: "init", to: "n2::n0ღB", action: chain(["logGroup1toGroup2"], aF) },
-    { from: "n2::n2ღGroup 2", event: "init", to: "n2::n2::n1ღGroup 3", action: chain(["logGroup2toGroup3"], aF) },
+    { from: "nok", event: "init", to: "Aღn1", action: chain([], aF) },
+    { from: "Aღn1", event: "event1", to: "Group 1ღn2", action: chain(["logAtoGroup1"], aF) },
+    { from: "Bღn2::n0", event: "", to: "Group 2ღn2::n2", action: chain([], aF) },
+    { from: "Group 1ღn2", event: "init", to: "Bღn2::n0", action: chain(["logGroup1toGroup2"], aF) },
+    { from: "Group 2ღn2::n2", event: "init", to: "Group 3ღn2::n2::n1", action: chain(["logGroup2toGroup3"], aF) },
     {
-      from: "n2::n2::n1::n0ღB",
+      from: "Bღn2::n2::n1::n0",
       event: "event1",
-      to: "n2::n2::n1::n3ღGroup 4",
+      to: "Group 4ღn2::n2::n1::n3",
       action: chain(["logGroup3BtoGroup4"], aF),
     },
     {
-      from: "n2::n2::n1ღGroup 3",
+      from: "Group 3ღn2::n2::n1",
       event: "init",
       guards: [
-        { predicate: every(["isNumber"], guards), to: "n2::n2::n1::n0ღB", action: chain(["logGroup3toB"], aF) },
-        { predicate: every(["not(isNumber)"], guards), to: "n2::n2::n1::n2ღC", action: chain(["logGroup3toC"], aF) },
+        { predicate: every(["isNumber"], guards), to: "Bღn2::n2::n1::n0", action: chain(["logGroup3toB"], aF) },
+        { predicate: every(["not(isNumber)"], guards), to: "Cღn2::n2::n1::n2", action: chain(["logGroup3toC"], aF) },
       ],
     },
-    { from: "n2::n2::n1::n3::n0ღA", event: "event1", to: "n2::n2::n1::n3::n1ღB", action: chain(["logAtoB"], aF) },
-    { from: "n2::n2::n1::n3::n0ღA", event: "event2", to: "n2::n2::n1::n3::n2ღC", action: chain(["logAtoC"], aF) },
-    { from: "n2::n2::n1::n3::n1ღB", event: "event2", to: "n2::n2::n1::n3::n3ღD", action: chain(["logBtoD"], aF) },
-    { from: "n2::n2::n1::n3::n2ღC", event: "event1", to: "n2::n2::n1::n3::n3ღD", action: chain(["logCtoD"], aF) },
+    { from: "Aღn2::n2::n1::n3::n0", event: "event1", to: "Bღn2::n2::n1::n3::n1", action: chain(["logAtoB"], aF) },
+    { from: "Aღn2::n2::n1::n3::n0", event: "event2", to: "Cღn2::n2::n1::n3::n2", action: chain(["logAtoC"], aF) },
+    { from: "Bღn2::n2::n1::n3::n1", event: "event2", to: "Dღn2::n2::n1::n3::n3", action: chain(["logBtoD"], aF) },
+    { from: "Cღn2::n2::n1::n3::n2", event: "event1", to: "Dღn2::n2::n1::n3::n3", action: chain(["logCtoD"], aF) },
     {
-      from: "n2::n2::n1::n3::n3ღD",
+      from: "Dღn2::n2::n1::n3::n3",
       event: "",
       guards: [
-        { predicate: every(["shouldReturnToA"], guards), to: "n2::n2::n1::n3::n0ღA", action: chain(["logDtoA"], aF) },
+        { predicate: every(["shouldReturnToA"], guards), to: "Aღn2::n2::n1::n3::n0", action: chain(["logDtoA"], aF) },
       ],
     },
-    { from: "n2::n2::n1::n3ღGroup 4", event: "init", to: "n2::n2::n1::n3::n0ღA", action: chain([], aF) },
+    { from: "Group 4ღn2::n2::n1::n3", event: "init", to: "Aღn2::n2::n1::n3::n0", action: chain([], aF) },
   ];
 
   return transitions;

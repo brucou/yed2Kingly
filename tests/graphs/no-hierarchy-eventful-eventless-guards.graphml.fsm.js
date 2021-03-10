@@ -68,7 +68,7 @@ function every(arrFns, guards) {
 var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
 var events = ["event"];
-var states = { n1ღA: "", n2ღTemp1: "", n3ღTemp2: "", n4ღDone: "" };
+var states = { Aღn1: "", Temp1ღn2: "", Temp2ღn3: "", Doneღn4: "" };
 function getKinglyTransitions(record) {
   var aF = record.actionFactories;
   var guards = record.guards;
@@ -107,22 +107,22 @@ function getKinglyTransitions(record) {
     throw new Error("Some guards are missing either in the graph, or in the guard implementation object!");
   }
   const transitions = [
-    { from: "nok", event: "init", to: "n1ღA", action: chain([], aF) },
+    { from: "nok", event: "init", to: "Aღn1", action: chain([], aF) },
     {
-      from: "n1ღA",
+      from: "Aღn1",
       event: "event",
       guards: [
-        { predicate: every(["condition1"], guards), to: "n2ღTemp1", action: chain(["logAtoTemp1"], aF) },
-        { predicate: every(["condition2"], guards), to: "n3ღTemp2", action: chain(["logAtoTemp2"], aF) },
-        { predicate: every(["condition3"], guards), to: "n4ღDone", action: chain(["logAtoDone"], aF) },
+        { predicate: every(["condition1"], guards), to: "Temp1ღn2", action: chain(["logAtoTemp1"], aF) },
+        { predicate: every(["condition2"], guards), to: "Temp2ღn3", action: chain(["logAtoTemp2"], aF) },
+        { predicate: every(["condition3"], guards), to: "Doneღn4", action: chain(["logAtoDone"], aF) },
       ],
     },
-    { from: "n2ღTemp1", event: "", to: "n1ღA", action: chain(["logTemp1toA"], aF) },
-    { from: "n3ღTemp2", event: "", to: "n1ღA", action: chain(["logTemp2toA"], aF) },
+    { from: "Temp1ღn2", event: "", to: "Aღn1", action: chain(["logTemp1toA"], aF) },
+    { from: "Temp2ღn3", event: "", to: "Aღn1", action: chain(["logTemp2toA"], aF) },
     {
-      from: "n4ღDone",
+      from: "Doneღn4",
       event: "",
-      guards: [{ predicate: every(["shouldReturnToA"], guards), to: "n1ღA", action: chain([], aF) }],
+      guards: [{ predicate: every(["shouldReturnToA"], guards), to: "Aღn1", action: chain([], aF) }],
     },
   ];
 

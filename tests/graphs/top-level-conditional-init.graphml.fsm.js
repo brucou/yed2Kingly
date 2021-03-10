@@ -63,7 +63,7 @@ function every(arrFns, guards) {
 var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
 var events = ["continue"];
-var states = { n0ღNumber: "", n2ღOther: "", n3ღDone: "" };
+var states = { Numberღn0: "", Otherღn2: "", Doneღn3: "" };
 function getKinglyTransitions(record) {
   var aF = record.actionFactories;
   var guards = record.guards;
@@ -106,12 +106,12 @@ function getKinglyTransitions(record) {
       from: "nok",
       event: "init",
       guards: [
-        { predicate: every(["isNumber"], guards), to: "n0ღNumber", action: chain([], aF) },
-        { predicate: every(["not(isNumber)"], guards), to: "n2ღOther", action: chain([], aF) },
+        { predicate: every(["isNumber"], guards), to: "Numberღn0", action: chain([], aF) },
+        { predicate: every(["not(isNumber)"], guards), to: "Otherღn2", action: chain([], aF) },
       ],
     },
-    { from: "n0ღNumber", event: "continue", to: "n3ღDone", action: chain(["logNumber"], aF) },
-    { from: "n2ღOther", event: "continue", to: "n3ღDone", action: chain(["logOther"], aF) },
+    { from: "Numberღn0", event: "continue", to: "Doneღn3", action: chain(["logNumber"], aF) },
+    { from: "Otherღn2", event: "continue", to: "Doneღn3", action: chain(["logOther"], aF) },
   ];
 
   return transitions;

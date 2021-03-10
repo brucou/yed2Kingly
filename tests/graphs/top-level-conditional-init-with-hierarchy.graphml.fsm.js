@@ -63,7 +63,7 @@ function every(arrFns, guards) {
 var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
 var events = ["continue"];
-var states = { "n1ღGroup 1": { "n1::n0ღNumber": "", "n1::n2ღOther": "", "n1::n3ღDone": "" } };
+var states = { "Group 1ღn1": { "Numberღn1::n0": "", "Otherღn1::n2": "", "Doneღn1::n3": "" } };
 function getKinglyTransitions(record) {
   var aF = record.actionFactories;
   var guards = record.guards;
@@ -102,17 +102,17 @@ function getKinglyTransitions(record) {
     throw new Error("Some guards are missing either in the graph, or in the guard implementation object!");
   }
   const transitions = [
-    { from: "nok", event: "init", to: "n1ღGroup 1", action: chain([], aF) },
-    { from: "n1::n0ღNumber", event: "continue", to: "n1::n3ღDone", action: chain(["logNumber"], aF) },
+    { from: "nok", event: "init", to: "Group 1ღn1", action: chain([], aF) },
+    { from: "Numberღn1::n0", event: "continue", to: "Doneღn1::n3", action: chain(["logNumber"], aF) },
     {
-      from: "n1ღGroup 1",
+      from: "Group 1ღn1",
       event: "init",
       guards: [
-        { predicate: every(["isNumber"], guards), to: "n1::n0ღNumber", action: chain([], aF) },
-        { predicate: every(["not(isNumber)"], guards), to: "n1::n2ღOther", action: chain([], aF) },
+        { predicate: every(["isNumber"], guards), to: "Numberღn1::n0", action: chain([], aF) },
+        { predicate: every(["not(isNumber)"], guards), to: "Otherღn1::n2", action: chain([], aF) },
       ],
     },
-    { from: "n1::n2ღOther", event: "continue", to: "n1::n3ღDone", action: chain(["logOther"], aF) },
+    { from: "Otherღn1::n2", event: "continue", to: "Doneღn1::n3", action: chain(["logOther"], aF) },
   ];
 
   return transitions;

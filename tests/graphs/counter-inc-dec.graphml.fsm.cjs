@@ -65,7 +65,7 @@ function every(arrFns, guards) {
 var NO_OUTPUT = [];
 var NO_STATE_UPDATE = [];
 var events = ["click inc", "click dec"];
-var states = { n1ღidle: "" };
+var states = { idleღn1: "" };
 function getKinglyTransitions(record) {
   var aF = record.actionFactories;
   var guards = record.guards;
@@ -104,22 +104,22 @@ function getKinglyTransitions(record) {
     throw new Error("Some guards are missing either in the graph, or in the guard implementation object!");
   }
   const transitions = [
-    { from: "nok", event: "init", to: "n1ღidle", action: chain([], aF) },
+    { from: "nok", event: "init", to: "idleღn1", action: chain([], aF) },
     {
-      from: "n1ღidle",
+      from: "idleღn1",
       event: "click inc",
       guards: [
         {
           predicate: every(["is it", "is it not"], guards),
-          to: "n1ღidle",
+          to: "idleღn1",
           action: chain(["increment counter", "render"], aF),
         },
       ],
     },
     {
-      from: "n1ღidle",
+      from: "idleღn1",
       event: "click dec",
-      to: "n1ღidle",
+      to: "idleღn1",
       action: chain(["decrement counter", "render", "render some more"], aF),
     },
   ];
