@@ -17,7 +17,7 @@
     "tests": "cd tests && mocha *specs*"
   },
   "dependencies": {
-    "@brucou/utilities": "^0.1.9",
+    "@brucou/utilities": "^0.2.0",
     "commander": "^5.0.0",
     "fast-xml-parser": "^3.16.0",
     "fp-rosetree": "0.6.2",
