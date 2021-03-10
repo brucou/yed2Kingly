@@ -95,6 +95,10 @@ function compileTransitionsStr(transitionsWithoutGuardsActions) {
   return {transitionsStr, predicateList, actionList}
 }
 
+// ADR:
+// We add ACTION_IDENTITY, NO_OUTPUT, NO_STATE_UPDATE directly in the code
+// to limit dependencies
+// We also tried not to use too many JS language features in case compatibility with IE11- is desired
 function computeFileContents(transitionsWithoutGuardsActions, events, states){
   // Compile the transitions for which we only have the names to actual Kingly transitions
   const {transitionsStr, predicateList, actionList} = compileTransitionsStr(transitionsWithoutGuardsActions);

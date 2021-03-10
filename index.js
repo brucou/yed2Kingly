@@ -53,10 +53,6 @@ module.exports = function convert(argv) {
           throw new Error(`The input graph does not represent a valid Kingly machine! Cf. log.`)
         }
 
-        // ADR:
-        // We add ACTION_IDENTITY, NO_OUTPUT, NO_STATE_UPDATE directly in the code
-        // to limit dependencies
-        // We also tried not to use too many JS language features in case compatibility with IE11- is desired
         const fileContents = computeFileContents(transitionsWithoutGuardsActions, events, states);
 
         // Write the esm output file
