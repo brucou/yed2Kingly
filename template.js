@@ -29,7 +29,32 @@ function every(arrFns, guards) {
 }
 `;
 
+const cjsImports = `var createStateMachine = require("kingly").createStateMachine;`;
+const esmImports = `import {createStateMachine} from "kingly";`;
+const esmExports = `
+         export {
+           events,
+           states,
+           getKinglyTransitions,
+           createStateMachineFromGraph
+         }
+`.trim();
+
+const cjsExports = `
+         module.exports = {
+           events,
+           states,
+           getKinglyTransitions,
+           createStateMachineFromGraph
+         }
+`.trim();
+
+
 module.exports = {
   implDoStr,
-  implEveryStr
+  implEveryStr,
+  cjsImports,
+  cjsExports,
+  esmImports,
+  esmExports
 }

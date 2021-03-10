@@ -11,7 +11,7 @@ module.exports = function convert(argv) {
   const {computeTransitionsAndStatesFromXmlString} = require('@brucou/utilities');
   const {checkKinglyContracts} = require('./helpers');
   const {DEFAULT_ACTION_FACTORY_STR} = require('./properties');
-  const {implDoStr, implEveryStr} = require('./template');
+  const {implDoStr, implEveryStr, esmExports, cjsExports, cjsImports, esmImports} = require('./template');
   const program = new Command();
 
 // Configure syntax, parse and run
@@ -87,8 +87,6 @@ module.exports = function convert(argv) {
         `.trim().concat(", ")
           }
           else {
-            // TODO: ?? we should come here iff we have a simplified syntax
-           // but then there is no predicate and no need to add to the list
            const {from, event, to, action} = transitionRecord;
            const actions = action.map(x => x.slice(3, -3)).filter(Boolean);
            actions.forEach(x => actionList.add(x));
@@ -189,26 +187,6 @@ function createStateMachineFromGraph(fsmDefForCompile, settings){
 }
 
          `.trim();
-
-        const cjsImports = `var createStateMachine = require("kingly").createStateMachine;`
-        const esmImports = `import {createStateMachine} from "kingly";`;
-        const esmExports = `
-         export {
-           events,
-           states,
-           getKinglyTransitions,
-           createStateMachineFromGraph
-         }
-`.trim();
-
-        const cjsExports = `
-         module.exports = {
-           events,
-           states,
-           getKinglyTransitions,
-           createStateMachineFromGraph
-         }
-`.trim();
 
         // Write the esm output file
         const esmContents = [esmImports, fileContents, esmExports].join("\n\n");
